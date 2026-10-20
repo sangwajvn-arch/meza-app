@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cashier — Meza</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A8371E'/><text x='50' y='68' font-size='58' fill='%23FAF6EE' text-anchor='middle' font-family='sans-serif' font-weight='800'>M</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <style>.staff-topbar{display:flex;justify-content:space-between;align-items:center;}</style>
+</head>
+<body>
+    <div class="staff-header">
+        <div class="staff-topbar">
+            <div>
+                <h1>Cashier</h1>
+                <p id="restaurant-label">Loading restaurant…</p>
+            </div>
+            <button class="btn-ghost" onclick="staffSignOut()" style="color:var(--bone);border-color:rgba(250,246,238,0.3);">Sign out</button>
+        </div>
+    </div>
+
+    <div class="staff-body">
+        <div class="section-heading">Payment Confirmations</div>
+        <div id="confirm-list" class="ticket-grid"></div>
+
+        <div class="section-heading">Awaiting Cash Payment</div>
+        <div id="cash-list" class="ticket-grid"></div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const restaurantId = params.get('restaurant');
+        let sessionOk = false;
+
+        function staffSignOut() {
+            fetch('/staff-logout', { method: 'POST' }).then(() => window.location.href = 'staff-login.html?restaurant=' + restaurantId);
+        }
+
+        async function checkSession() {
+            try {
+                const res = await fetch('/staff/me');
+                const data = await res.json();
+                if (!res.ok || data.role !== 'cashier' || String(data.restaurantId) !== String(restaurantId)) {
+                    window.location.href = 'staff-login.html?restaurant=' + restaurantId;
+                    return;
+                }
+                sessionOk = true;
+                document.getElementById('restaurant-label').textContent = 'Signed in as ' + data.name;
+                loadOrders();
+                setInterval(loadOrders, 3000);
+            } catch (e) {
+                window.location.href = 'staff-login.html?restaurant=' + restaurantId;
+            }
+        }
+
+        function loadOrders() {
+            if (!sessionOk) return;
+            Promise.all([
+                fetch('/orders?restaurant=' + restaurantId).then(r => r.json()),
+                fetch('/menu?restaurant=' + restaurantId).then(r => r.json())
+            ]).then(([orders, menu]) => {
+                renderSection(orders, menu, 'awaiting_confirmation', 'confirm-list', order =>
+                    '<button class="btn-success" onclick="confirmPayment(' + order.id + ')">Confirm received</button> ' +
+                    '<button class="btn-danger" onclick="rejectPayment(' + order.id + ')">Nothing received</button>'
+                );
+                const cashOrders = orders.filter(o => o.status === 'done' && !o.paid);
+                renderCashSection(cashOrders, menu);
+            });
+        }
+
+        function renderSection(orders, menu, status, containerId, buttonHtml) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const filtered = orders.filter(o => o.status === status);
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state">No orders here right now.</div>';
+                return;
+            }
+            filtered.forEach(order => {
+                const div = document.createElement('div');
+                div.className = 'ticket';
+                let itemsText = '';
+                for (let id in order.items) {
+                    const dish = menu.find(m => m.id === id);
+                    itemsText += (dish ? dish.name : id) + ' × ' + order.items[id] + '<br>';
+                }
+                itemsText += '<br>Total: ' + Number(order.total || 0).toLocaleString() + ' RWF';
+                itemsText += '<br>Method: ' + (order.payment_method || 'unknown');
+                itemsText += order.sms_verified
+                    ? '<br><span style="color:var(--forest);font-weight:700;">✓ Message checks out</span>'
+                    : '<br><span style="color:var(--rust);font-weight:700;">⚠ Message not verified — check carefully</span>';
+                if (order.sms_text) {
+                    itemsText += '<br><span style="font-size:12px;color:var(--muted);">"' + order.sms_text.substring(0, 120) + (order.sms_text.length > 120 ? '...' : '') + '"</span>';
+                }
+                div.innerHTML = `
+                    <div class="ticket-table">Table ${order.table}</div>
+                    <div class="ticket-items">${itemsText}</div>
+                    <div class="ticket-actions">${buttonHtml(order)}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderCashSection(orders, menu) {
+            const container = document.getElementById('cash-list');
+            container.innerHTML = '';
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="empty-state">No unpaid tables right now.</div>';
+                return;
+            }
+            orders.forEach(order => {
+                const div = document.createElement('div');
+                div.className = 'ticket';
+                let itemsText = '';
+                for (let id in order.items) {
+                    const dish = menu.find(m => m.id === id);
+                    itemsText += (dish ? dish.name : id) + ' × ' + order.items[id] + '<br>';
+                }
+                itemsText += '<br>Total: ' + Number(order.total || 0).toLocaleString() + ' RWF';
+                div.innerHTML = `
+                    <div class="ticket-table">Table ${order.table}</div>
+                    <div class="ticket-items">${itemsText}</div>
+                    <div class="ticket-actions"><button class="btn-success" onclick="recordCash(${order.id})">Record cash payment</button></div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function confirmPayment(id) {
+            fetch('/orders/' + id + '/confirm-payment', { method: 'POST' }).then(() => loadOrders());
+        }
+
+        function rejectPayment(id) {
+            fetch('/orders/' + id + '/reject-payment', { method: 'POST' }).then(() => loadOrders());
+        }
+
+        function recordCash(id) {
+            fetch('/orders/' + id + '/pay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ payment_method: 'cash' })
+            }).then(() => loadOrders());
+        }
+    checkSession();
+    </script>
+</body>
+</html>

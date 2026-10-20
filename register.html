@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create your restaurant — Meza</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A8371E'/><text x='50' y='68' font-size='58' fill='%23FAF6EE' text-anchor='middle' font-family='sans-serif' font-weight='800'>M</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="staff-header">
+        <h1>Create your restaurant</h1>
+        <p>Get set up on Meza in a couple of minutes</p>
+    </div>
+
+    <div class="staff-body">
+        <div class="panel">
+            <div class="field-group">
+                <label>Restaurant name</label>
+                <input type="text" id="venueName" placeholder="e.g. La Casemia Restaurant">
+            </div>
+            <div class="field-group">
+                <label>Phone number</label>
+                <input type="text" id="phone" placeholder="+250 788 123 456">
+            </div>
+            <div class="field-group">
+                <label>Your full name</label>
+                <input type="text" id="fullName" placeholder="e.g. Sangwa Moses">
+            </div>
+            <div class="field-group">
+                <label>Work email</label>
+                <input type="text" id="email" placeholder="you@yourrestaurant.com">
+            </div>
+            <div class="field-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="At least 8+ characters">
+            </div>
+            <button class="btn-success" onclick="register()">Create restaurant</button>
+            <p style="margin-top:14px;">Already have an account? <a href="login.html">Sign in</a></p>
+        </div>
+    </div>
+
+    <script>
+        function register() {
+            const venueName = document.getElementById('venueName').value;
+            const phone = document.getElementById('phone').value;
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (password.length < 8) {
+                alert('Password must be at least 8 characters.');
+                return;
+            }
+
+            fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ venueName, phone, fullName, email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    window.location.href = 'admin.html?restaurant=' + data.restaurantId;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

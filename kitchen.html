@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kitchen</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A8371E'/><text x='50' y='68' font-size='58' fill='%23FAF6EE' text-anchor='middle' font-family='sans-serif' font-weight='800'>M</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <style>.staff-topbar{display:flex;justify-content:space-between;align-items:center;}</style>
+</head>
+<body>
+    <div class="staff-header">
+        <div class="staff-topbar">
+            <div>
+                <h1>Kitchen Board</h1>
+                <p id="restaurant-label">Loading restaurant…</p>
+            </div>
+            <button class="btn-ghost" onclick="staffSignOut()" style="color:var(--bone);border-color:rgba(250,246,238,0.3);">Sign out</button>
+        </div>
+    </div>
+
+    <div class="staff-body">
+        <div class="section-heading">Approved Orders</div>
+        <div id="orders-list" class="ticket-grid"></div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const restaurantId = params.get('restaurant');
+        let sessionOk = false;
+
+        function staffSignOut() {
+            fetch('/staff-logout', { method: 'POST' }).then(() => window.location.href = 'staff-login.html?restaurant=' + restaurantId);
+        }
+
+        async function checkSession() {
+            try {
+                const res = await fetch('/staff/me');
+                const data = await res.json();
+                if (!res.ok || data.role !== 'kitchen' || String(data.restaurantId) !== String(restaurantId)) {
+                    window.location.href = 'staff-login.html?restaurant=' + restaurantId;
+                    return;
+                }
+                sessionOk = true;
+                document.getElementById('restaurant-label').textContent = 'Signed in as ' + data.name;
+                loadOrders();
+                setInterval(loadOrders, 3000);
+            } catch (e) {
+                window.location.href = 'staff-login.html?restaurant=' + restaurantId;
+            }
+        }
+
+        function loadOrders() {
+            if (!sessionOk) return;
+            Promise.all([
+                fetch('/orders?restaurant=' + restaurantId).then(r => r.json()),
+                fetch('/menu?restaurant=' + restaurantId).then(r => r.json())
+            ]).then(([orders, menu]) => {
+                const container = document.getElementById('orders-list');
+                container.innerHTML = '';
+                const approved = orders.filter(o => o.status === 'approved');
+                if (approved.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No orders waiting to be cooked.</div>';
+                    return;
+                }
+                approved.forEach(order => {
+                    const div = document.createElement('div');
+                    div.className = 'ticket';
+                    let itemsText = '';
+                    for (let id in order.items) {
+                        const dish = menu.find(m => m.id === id);
+                        itemsText += (dish ? dish.name : id) + ' × ' + order.items[id] + '<br>';
+                    }
+                    div.innerHTML = `
+                        <div class="ticket-table">Table ${order.table}</div>
+                        <div class="ticket-items">${itemsText}</div>
+                        <div class="ticket-actions"><button class="btn-success" onclick="markReady(${order.id})">Mark ready for pickup</button></div>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        function markReady(orderId) {
+            fetch('/orders/' + orderId + '/ready', { method: 'POST' }).then(() => loadOrders());
+        }
+
+        checkSession();
+    </script>
+</body>
+</html>

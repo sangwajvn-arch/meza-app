@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Meza — Venue workspace</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A8371E'/><text x='50' y='68' font-size='58' fill='%23FAF6EE' text-anchor='middle' font-family='sans-serif' font-weight='800'>M</text></svg>">
+  <style>
+:root { --admin-page: var(--bone); --admin-panel: #fff; --admin-sidebar: var(--ink); --admin-line: var(--border); }
+
+html, body {
+    width: 100vw; height: 100vh; margin: 0; padding: 0;
+    max-width: none; max-height: none; overflow-x: hidden;
+    background: var(--admin-page); color: var(--ink);
+}
+
+.meza-app, .meza-app * {
+    box-sizing: border-box; max-width: none; background: none; border: none; border-radius: 0;
+    margin: 0; padding: 0; color: inherit; font-size: inherit; font-weight: inherit; text-align: left;
+}
+
+.meza-app { display: grid; grid-template-columns: 230px minmax(0,1fr); width: 100vw; min-height: 100vh; }
+
+.sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 22px 14px; background: var(--admin-sidebar); color: var(--bone); }
+.brand { display: flex; align-items: center; gap: 9px; margin-bottom: 25px; color: var(--bone); font-size: 19px; font-weight: 800; }
+.brand-mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--rust); color: var(--bone); font-size: 15px; }
+.venue-chip { display: block; padding: 10px 11px; margin-bottom: 18px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; background: rgba(255,255,255,.06); color: var(--bone); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.nav-section { margin: 22px 9px 8px; color: rgba(250,246,238,.44); font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.nav-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; margin: 2px 0; border-radius: 8px; background: transparent; color: rgba(250,246,238,.72); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
+.nav-item:hover { background: rgba(224,163,46,.14); color: var(--bone); }
+.nav-item.active { background: var(--rust); color: var(--bone); }
+
+.main { width: 100%; min-height: 100vh; padding: 24px 32px 70px; color: var(--ink); }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 20px; margin-bottom: 26px; border-bottom: 1px solid var(--admin-line); }
+.crumb { flex: 1; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.signout { border: 1px solid var(--admin-line); border-radius: 8px; background: transparent; color: var(--ink); padding: 9px 12px; cursor: pointer; font: inherit; font-size: 11px; font-weight: 800; }
+#fullscreen-btn { border: 1px solid var(--admin-line); border-radius: 8px; padding: 6px 10px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--ink); }
+#screen { width: 100%; color: var(--ink); }
+
+.hero { padding: 30px; margin-bottom: 24px; border-radius: 14px; background: linear-gradient(125deg, var(--forest), var(--ink)); border-left: 6px solid var(--rust); color: var(--bone); }
+.hero h1 { color: var(--bone); font-size: 28px; font-weight: 800; }
+.hero p { margin: 7px 0 17px; color: rgba(250,246,238,.72); font-size: 12px; }
+.pill { display: inline-block; padding: 7px 10px; border-radius: 99px; background: rgba(255,255,255,.1); color: var(--bone); font-size: 10px; font-weight: 800; margin-right: 8px; }
+
+.section-label { margin: 25px 0 10px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.metric, .card { padding: 18px; border: 1px solid var(--admin-line); border-radius: 12px; background: var(--admin-panel); color: var(--ink); }
+.metric { border-top: 3px solid var(--gold); }
+.metric-label { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.metric-value { margin-top: 8px; font-size: 26px; font-weight: 800; color: var(--ink); }
+.metric-note { margin-top: 4px; color: var(--muted); font-size: 11px; }
+
+.screen-head { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 22px; }
+.screen-title { font-size: 26px; font-weight: 800; color: var(--ink); }
+.screen-head p { margin-top: 5px; color: var(--muted); font-size: 12px; }
+
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+.form-grid .wide { grid-column: 1 / -1; }
+.field label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.field input, .field select { width: 100%; padding: 10px 11px; border: 1px solid var(--admin-line); border-radius: 8px; background: var(--bone); color: var(--ink); font: inherit; font-size: 12px; }
+.field input:focus, .field select:focus { border-color: var(--rust); }
+
+.button-row { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+.primary, .secondary, .danger { padding: 9px 14px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 800; }
+.primary { background: var(--rust); color: var(--bone); }
+.secondary { background: var(--bone); color: var(--ink); border: 1px solid var(--admin-line); }
+.danger { background: #fff0ef; color: var(--rust); }
+
+.list { display: grid; gap: 10px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid var(--admin-line); border-radius: 10px; background: var(--admin-panel); }
+.row-title { font-size: 13px; font-weight: 800; color: var(--ink); }
+.row-meta { margin-top: 4px; color: var(--muted); font-size: 11px; }
+.row-actions { display: flex; gap: 8px; }
+.status { display: inline-block; padding: 4px 7px; border-radius: 99px; font-size: 9px; font-weight: 800; text-transform: uppercase; margin-left: 8px; }
+.pending, .awaiting_payment, .awaiting_confirmation { background: #fff1d3; color: #936000; }
+.approved { background: #efe9de; color: var(--rust); }
+.ready, .done { background: #e4f1df; color: var(--forest); }
+.void, .rejected { background: #fff0ef; color: var(--rust); }
+.empty { padding: 28px; border: 1px dashed var(--admin-line); border-radius: 10px; color: var(--muted); font-size: 12px; text-align: center; }
+.toast { position: fixed; right: 22px; bottom: 22px; padding: 12px 15px; border-radius: 9px; background: var(--ink); color: var(--bone); font-size: 12px; font-weight: 700; z-index: 200; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,23,18,0.5); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.active { display: flex; }
+.modal-box { background: var(--admin-panel); border-radius: 14px; padding: 26px; width: 90%; max-width: 560px; max-height: 85vh; overflow-y: auto; color: var(--ink); }
+.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.modal-head h2 { font-size: 19px; font-weight: 800; }
+.modal-close { background: none; font-size: 20px; cursor: pointer; color: var(--muted); }
+.recipe-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+.recipe-row select, .recipe-row input { padding: 10px 11px; border: 1px solid var(--admin-line); border-radius: 8px; background: var(--bone); color: var(--ink); font-size: 12px; }
+.recipe-row-remove { background: none; color: var(--rust); font-size: 18px; cursor: pointer; padding: 0 6px; }
+
+.billing-wrap { max-width: 900px; }
+.billing-card { padding: 22px; border: 1px solid #2a382c; border-radius: 14px; background: #1b261e; color: #ffffff; }
+.billing-top { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 18px; border-bottom: 1px solid #2a382c; }
+.billing-label { color: #a3a8a4; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.billing-plan-name { margin-top: 5px; font-size: 20px; font-weight: 800; color: #fffde8; }
+.billing-subtext { margin-top: 3px; color: #a3a8a4; font-size: 11px; }
+.billing-status { padding: 6px 10px; border-radius: 99px; background: #2d312e; color: #ffffff; font-size: 10px; font-weight: 800; }
+.plan-list { display: grid; gap: 8px; margin-top: 12px; }
+.plan-option { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 13px; border: 1px solid #2a382c; border-radius: 10px; background: #151e18; color: #ffffff; }
+.plan-option.current { border-color: #fffde8; background: #233227; }
+.plan-name { font-size: 13px; font-weight: 800; color: #ffffff; }
+.current-text { margin-left: 5px; color: #fffde8; font-size: 9px; font-weight: 800; }
+.plan-description { margin-top: 3px; color: #a3a8a4; font-size: 10px; }
+.billing-footnote { margin-top: 14px; color: #a3a8a4; font-size: 10px; }
+
+@media (max-width: 900px) {
+    .meza-app { display: block; }
+    .sidebar { position: static; height: auto; }
+    .sidebar nav { display: flex; gap: 5px; overflow-x: auto; }
+    .nav-section { display: none; }
+    .main { padding: 16px; }
+    .metric-grid, .form-grid { grid-template-columns: 1fr; }
+}
+  </style>
+</head>
+<body>
+  <div class="meza-app">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">M</span> Meza</div>
+      <div class="venue-chip" id="venue-chip">Loading venue…</div>
+      <nav>
+        <div class="nav-section">Workspace</div>
+        <button class="nav-item active" data-screen="overview" onclick="showScreen('overview')">Overview</button>
+        <div class="nav-section">Service</div>
+        <button class="nav-item" data-screen="orders" onclick="showScreen('orders')">Live orders</button>
+        <button class="nav-item" data-screen="cashier" onclick="showScreen('cashier')">Cashier</button>
+        <button class="nav-item" data-screen="qr" onclick="showScreen('qr')">QR Codes</button>
+        <div class="nav-section">Operations</div>
+        <button class="nav-item" data-screen="menu" onclick="showScreen('menu')"><span>Menu</button>
+        <button class="nav-item" data-screen="ingredients" onclick="showScreen('ingredients')">Inventory & Ingredients</button>
+        <button class="nav-item" data-screen="team" onclick="showScreen('team')">Venue team</button>
+        <div class="nav-section">Business</div>
+        <button class="nav-item" data-screen="reports" onclick="showScreen('reports')">Reports</button>
+        <button class="nav-item" data-screen="payments" onclick="showScreen('payments')">Payment Setup</button>
+        <button class="nav-item" data-screen="billing" onclick="showScreen('billing')">Billing</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+ 
+        <div class="crumb" id="breadcrumb">Venue workspace</div>
+        <button id="fullscreen-btn" type="button" title="Toggle Fullscreen">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+        </button>
+        <span>  </span>
+          <span id="pos-time" style="color: #1b1c1c; font-weight: bold;">--:--:--</span>
+  <span style="color: #080808; margin: 0 8px;">|</span>
+  <span id="pos-date" style="color: #101111;">--- --, ----</span>
+        <button class="signout" onclick="signOut()">Sign out</button>
+      </div>
+      <section id="screen"></section>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="dish-modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 id="modal-title">Add Dish</h2>
+        <button class="modal-close" onclick="closeDishModal()">✕</button>
+      </div>
+      <div class="form-grid">
+        <div class="field wide"><label>Dish ID</label><input id="modal-id" placeholder="e.g. fish"></div>
+        <div class="field"><label>Name</label><input id="modal-name" placeholder="Dish name"></div>
+        <div class="field"><label>Price (RWF)</label><input id="modal-price" type="number"></div>
+        <div class="field wide"><label>Description</label><input id="modal-description" placeholder="Short description"></div>
+        <div class="field"><label>Image URL</label><input id="modal-image" placeholder="https://..."></div>
+        <div class="field"><label>Prep time (minutes)</label><input id="modal-prep-time" type="number" placeholder="e.g. 15"></div>
+        <div class="field wide">
+          <label>Category</label>
+          <input id="modal-category" list="category-suggestions" placeholder="e.g. Grilled Food">
+          <datalist id="category-suggestions"></datalist>
+        </div>
+      </div>
+      <div class="section-label">Recipe / Ingredients — raw materials needed per 1 dish</div>
+      <div id="modal-recipe-rows"></div>
+      <div class="recipe-row">
+        <select id="modal-new-ingredient" style="flex:2;"></select>
+        <input id="modal-new-qty" type="number" step="0.01" placeholder="Qty per dish" style="flex:1;">
+        <button class="secondary" onclick="addRecipeRow()">+ Add</button>
+      </div>
+      <div class="button-row" style="margin-top:20px;">
+        <button class="secondary" onclick="closeDishModal()">Cancel</button>
+        <button class="primary" onclick="saveDishModal()">Save Dish</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="ingredient-modal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 id="ingredient-modal-title">Add Ingredient</h2>
+        <button class="modal-close" onclick="closeIngredientModal()">✕</button>
+      </div>
+      <div class="form-grid">
+        <div class="field wide"><label>Name</label><input id="ing-modal-name" placeholder="e.g. Chicken breast"></div>
+        <div class="field"><label>Unit</label><input id="ing-modal-unit" placeholder="kg, litres, pieces..."></div>
+        <div class="field"><label>Quantity in stock</label><input id="ing-modal-qty" type="number" step="0.1"></div>
+        <div class="field"><label>Low stock alert at</label><input id="ing-modal-low" type="number" step="0.1"></div>
+        <div class="field"><label>Cost per unit (RWF)</label><input id="ing-modal-cost" type="number" step="0.01" placeholder="e.g. 6500"></div>
+      </div>
+      <div class="button-row" style="margin-top:20px;">
+        <button class="secondary" onclick="closeIngredientModal()">Cancel</button>
+        <button class="primary" onclick="saveIngredientModal()">Save Ingredient</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let restaurantId;
+    let restaurant = {};
+    let modalRecipe = [];
+    let modalIngredients = [];
+    let modalEditingId = null;
+    let ingredientEditingId = null;
+    let reportFrom = '';
+    let reportTo = '';
+
+    const screen = document.getElementById('screen');
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const money = value => `${Number(value || 0).toLocaleString()} RWF`;
+    const formatDateTime = ms => new Date(ms).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const isoDate = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+
+    const screenLabels = {
+      overview: 'Overview', orders: 'Live orders', cashier: 'Cashier', qr: 'QR Codes', menu: 'Menu',
+      ingredients: 'Inventory & Ingredients', team: 'Venue team', reports: 'Reports', payments: 'Payment Setup', billing: 'Billing'
+    };
+    const methodLabels = { momo: 'MTN MoMo', airtel: 'Airtel Money', urubuto: 'Urubuto Pay', card: 'Card', cash: 'Cash' };
+
+    document.getElementById('fullscreen-btn').addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(err => console.error(err.message));
+      else document.exitFullscreen();
+    });
+
+    async function api(url, options = {}) {
+      const response = await fetch(url, { headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }, ...options });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Something went wrong.');
+      return data;
+    }
+
+    function toast(message) {
+      document.querySelector('.toast')?.remove();
+      const item = document.createElement('div');
+      item.className = 'toast';
+      item.textContent = message;
+      document.body.appendChild(item);
+      setTimeout(() => item.remove(), 2800);
+    }
+    function startPOSClock() {
+    const timeEl = document.getElementById('pos-time');
+    const dateEl = document.getElementById('pos-date');
+
+    function update() {
+      const now = new Date();
+      timeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+      dateEl.textContent = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    update();
+    setInterval(update, 1000);
+  }
+
+  // Start clock when DOM is loaded
+  document.addEventListener('DOMContentLoaded', startPOSClock);
+
+    function setActive(name) {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
+    }
+
+    async function loadRestaurant() {
+      restaurant = await api('/restaurants/' + restaurantId);
+      document.getElementById('venue-chip').textContent = restaurant.name;
+    }
+
+    async function showScreen(name) {
+      setActive(name);
+      document.getElementById('breadcrumb').textContent = screenLabels[name] || name;
+      const renderers = {
+        overview: renderOverview, orders: renderOrders, cashier: renderCashier, qr: renderQr, menu: renderMenu,
+        ingredients: renderIngredients, team: renderTeam, reports: renderReports, payments: renderPayments
+      };
+      try { await renderers[name](); }
+      catch (error) { screen.innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`; }
+    }
+
+    // ---------- Overview ----------
+    async function renderOverview() {
+      const dashboard = await api('/dashboard?restaurant=' + restaurantId);
+      screen.innerHTML = `
+        <div class="hero">
+          <h1>${escapeHtml(restaurant.name)}</h1>
+          <p>Your restaurant workspace</p>
+          <span class="pill">Venue ID ${restaurantId}</span>
+          <span class="pill">${dashboard.openOrders} active orders</span>
+        </div>
+        <div class="section-label">At a glance</div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Open orders</div><div class="metric-value">${dashboard.openOrders}</div><div class="metric-note">${dashboard.counts.pending} pending · ${dashboard.counts.ready} ready</div></div>
+          <div class="metric"><div class="metric-label">Captured revenue</div><div class="metric-value">${money(dashboard.revenue)}</div><div class="metric-note">Confirmed payments</div></div>
+          <div class="metric"><div class="metric-label">Voided</div><div class="metric-value">${(dashboard.counts.void || 0) + (dashboard.counts.rejected || 0)}</div><div class="metric-note">Voided or rejected orders</div></div>
+        </div>
+      `;
+    }
+
+    // ---------- Orders & cashier ----------
+    function orderRow(order, cashier) {
+      const itemText = Object.entries(order.items || {}).map(([id, qty]) => `${escapeHtml(id)} × ${qty}`).join(' · ') || 'No items';
+      const actions = [];
+      if (order.status === 'awaiting_payment') actions.push(`<button class="danger" onclick="voidOrder(${order.id})">Void (unpaid)</button>`);
+      if (order.status === 'awaiting_confirmation') actions.push(`<button class="primary" onclick="showScreen('cashier')">Check proof</button>`);
+      if (order.status === 'pending') actions.push(`<button class="primary" onclick="orderAction(${order.id}, 'approve')">Approve</button>`);
+      if (order.status === 'approved') actions.push(`<button class="primary" onclick="orderAction(${order.id}, 'ready')">Mark ready</button>`);
+      if (order.status === 'ready') actions.push(`<button class="primary" onclick="orderAction(${order.id}, 'done')">Mark served</button>`);
+      if (cashier && order.status === 'done' && !order.paid) actions.push(`<button class="primary" onclick="orderAction(${order.id}, 'pay')">Mark paid</button>`);
+      if (!['done', 'void', 'rejected', 'awaiting_payment', 'awaiting_confirmation'].includes(order.status)) actions.push(`<button class="danger" onclick="voidOrder(${order.id})">Void</button>`);
+      return `<div class="row"><div><div class="row-title">Table ${escapeHtml(order.table)}<span class="status ${escapeHtml(order.status)}">${escapeHtml(order.status.replace('_', ' '))}</span></div><div class="row-meta">${itemText}${order.paid ? ' · Paid via ' + escapeHtml(methodLabels[order.payment_method] || order.payment_method || '') : ''}</div></div><div class="row-actions">${actions.join('')}</div></div>`;
+    }
+
+    async function renderOrders() {
+      const orders = await api('/orders?restaurant=' + restaurantId);
+      screen.innerHTML = `<div class="screen-head"><div><h1 class="screen-title">Live orders</h1><p>Progress orders from received to served.</p></div><button class="secondary" onclick="showScreen('orders')">Refresh</button></div><div class="list">${orders.length ? orders.slice().reverse().map(o => orderRow(o, false)).join('') : '<div class="empty">No orders yet.</div>'}</div>`;
+    }
+
+    async function renderCashier() {
+      const [orders, menu] = await Promise.all([
+        api('/orders?restaurant=' + restaurantId),
+        api('/menu?restaurant=' + restaurantId)
+      ]);
+      const priceOf = {};
+      menu.forEach(m => { priceOf[m.id] = m.price; });
+      const orderTotal = o => Object.entries(o.items || {}).reduce((sum, [id, qty]) => sum + (priceOf[id] || 0) * qty, 0);
+
+      const toCheck = orders.filter(o => o.status === 'awaiting_confirmation');
+      const completed = orders.filter(o => o.status === 'done' && !o.paid);
+
+      const proofRow = o => {
+        const total = orderTotal(o);
+        const sms = o.sms_text || '';
+        const numbers = (sms.match(/\d[\d,]*(?:\.\d+)?/g) || []).map(n => Number(n.replace(/,/g, '')));
+        const amountFound = sms && numbers.includes(total);
+        const hint = !sms
+          ? '<span class="status void">no SMS pasted</span>'
+          : amountFound
+            ? '<span class="status ready">amount found in SMS</span>'
+            : '<span class="status void">amount not found in SMS</span>';
+        const serverNote = o.verify_reason
+          ? `<div class="row-meta">System note: ${escapeHtml(o.verify_reason)}</div>` : '';
+
+        return `<div class="row" style="align-items:flex-start;">
+          <div style="flex:1;">
+            <div class="row-title">Table ${escapeHtml(o.table)} — expected ${money(total)} via ${escapeHtml(methodLabels[o.payment_method] || o.payment_method || '')}${hint}</div>
+            <div style="margin-top:10px;padding:10px 12px;border:1px solid var(--admin-line);border-radius:8px;background:var(--bone);font-size:12px;white-space:pre-wrap;word-break:break-word;">${sms ? escapeHtml(sms) : 'The customer did not paste an SMS.'}</div>
+            ${serverNote}
+          </div>
+          <div class="row-actions">
+            <button class="primary" onclick="confirmPayment(${o.id})">Confirm payment</button>
+            <button class="danger" onclick="rejectPayment(${o.id})">Reject</button>
+          </div>
+        </div>`;
+      };
+
+      screen.innerHTML = `
+        <div class="screen-head"><div><h1 class="screen-title">Cashier</h1><p>Check payment proof, then record payments for served orders.</p></div><button class="secondary" onclick="showScreen('cashier')">Refresh</button></div>
+        <div class="section-label">Payments to check</div>
+        <div class="list">${toCheck.length ? toCheck.map(proofRow).join('') : '<div class="empty">No payment proofs waiting.</div>'}</div>
+        <div class="section-label">Served orders waiting for payment</div>
+        <div class="list">${completed.length ? completed.map(o => orderRow(o, true)).join('') : '<div class="empty">No served orders waiting for payment.</div>'}</div>
+      `;
+    }
+
+    async function orderAction(id, action) {
+      try {
+        await api('/orders/' + id + '/' + action, { method: 'POST' });
+        toast('Order updated.');
+      } catch (error) { alert(error.message); }
+      showScreen(document.querySelector('.nav-item.active').dataset.screen);
+    }
+
+    async function confirmPayment(id) {
+      if (!confirm('Have you checked this payment on your MoMo / Airtel account or statement?')) return;
+      try {
+        await api('/orders/' + id + '/confirm-payment', { method: 'POST' });
+        toast('Payment confirmed.');
+      } catch (error) { alert(error.message); }
+      showScreen('cashier');
+    }
+
+    async function rejectPayment(id) {
+      const reason = prompt('Why is this payment proof rejected?');
+      if (reason === null) return;
+      try {
+        await api('/orders/' + id + '/reject-payment', { method: 'POST', body: JSON.stringify({ reason }) });
+        toast('Payment rejected.');
+      } catch (error) { alert(error.message); }
+      showScreen('cashier');
+    }
+
+    async function voidOrder(id) {
+      const reason = prompt('Reason for voiding this order?');
+      if (reason === null) return;
+      try {
+        await api('/orders/' + id + '/void', { method: 'POST', body: JSON.stringify({ reason }) });
+        toast('Order voided.');
+      } catch (error) { alert(error.message); }
+      showScreen(document.querySelector('.nav-item.active').dataset.screen);
+    }
+
+    // ---------- Menu ----------
+    async function renderMenu() {
+      const menu = await api('/menu?restaurant=' + restaurantId);
+      screen.innerHTML = `
+        <div class="screen-head"><div><h1 class="screen-title">Menu</h1><p>Publish dishes for customers to order.</p></div><button class="primary" onclick="openAddDishModal()">+ Add Dish</button></div>
+        <div class="list">${menu.length ? menu.map(item => `
+          <div class="row"><div><div class="row-title">${escapeHtml(item.name)} — ${money(item.price)}</div><div class="row-meta">${escapeHtml(item.category || 'Other')} · ${escapeHtml(item.description || '')}</div></div>
+          <div class="row-actions"><button class="secondary" onclick="openEditDishModal('${escapeHtml(item.id)}')">Edit</button><button class="danger" onclick="deleteDish('${escapeHtml(item.id)}')">Delete</button></div></div>
+        `).join('') : '<div class="empty">No dishes yet — add your first one above.</div>'}</div>
+      `;
+    }
+
+    async function loadModalIngredients() {
+      modalIngredients = await api('/ingredients?restaurant=' + restaurantId);
+      const select = document.getElementById('modal-new-ingredient');
+      select.innerHTML = '<option value="">— select —</option>' + modalIngredients.map(i => `<option value="${i.id}">${escapeHtml(i.name)} (${escapeHtml(i.unit)})</option>`).join('');
+    }
+
+    function renderRecipeRows() {
+      const container = document.getElementById('modal-recipe-rows');
+      container.innerHTML = modalRecipe.map((r, index) => {
+        const ing = modalIngredients.find(i => i.id === r.ingredient_id);
+        return `<div class="recipe-row"><span style="flex:2;">${ing ? escapeHtml(ing.name) : 'Unknown ingredient'}</span><span style="flex:1;">${r.quantity} ${ing ? escapeHtml(ing.unit) : ''}</span><button class="recipe-row-remove" onclick="removeRecipeRow(${index})">✕</button></div>`;
+      }).join('');
+    }
+
+    function addRecipeRow() {
+      const ingredientId = Number(document.getElementById('modal-new-ingredient').value);
+      const qty = Number(document.getElementById('modal-new-qty').value);
+      if (!ingredientId || !qty || qty <= 0) { alert('Choose a raw material and a quantity greater than 0.'); return; }
+      modalRecipe.push({ ingredient_id: ingredientId, quantity: qty });
+      document.getElementById('modal-new-ingredient').value = '';
+      document.getElementById('modal-new-qty').value = '';
+      renderRecipeRows();
+    }
+
+    function removeRecipeRow(index) { modalRecipe.splice(index, 1); renderRecipeRows(); }
+
+    async function openAddDishModal() {
+      modalEditingId = null;
+      modalRecipe = [];
+      document.getElementById('modal-title').textContent = 'Add Dish';
+      document.getElementById('modal-id').value = '';
+      document.getElementById('modal-id').disabled = false;
+      document.getElementById('modal-name').value = '';
+      document.getElementById('modal-price').value = '';
+      document.getElementById('modal-description').value = '';
+      document.getElementById('modal-image').value = '';
+      document.getElementById('modal-prep-time').value = '';
+      document.getElementById('modal-category').value = '';
+      const menu = await api('/menu?restaurant=' + restaurantId);
+      const categories = [...new Set(menu.map(item => item.category).filter(Boolean))];
+      document.getElementById('category-suggestions').innerHTML = categories.map(c => `<option value="${escapeHtml(c)}">`).join('');
+      await loadModalIngredients();
+      renderRecipeRows();
+      document.getElementById('dish-modal').classList.add('active');
+    }
+
+    async function openEditDishModal(id) {
+      const menu = await api('/menu?restaurant=' + restaurantId);
+      const item = menu.find(d => d.id === id);
+      const recipe = await api('/menu/' + encodeURIComponent(id) + '/recipe?restaurant=' + restaurantId);
+
+      modalEditingId = id;
+      modalRecipe = recipe.map(r => ({ ingredient_id: r.ingredient_id, quantity: r.quantity_required }));
+
+      document.getElementById('modal-title').textContent = 'Edit Dish';
+      document.getElementById('modal-id').value = item.id;
+      document.getElementById('modal-id').disabled = true;
+      document.getElementById('modal-name').value = item.name;
+      document.getElementById('modal-price').value = item.price;
+      document.getElementById('modal-description').value = item.description || '';
+      document.getElementById('modal-image').value = item.image_url || '';
+      document.getElementById('modal-prep-time').value = item.prep_time_minutes || '';
+      document.getElementById('modal-category').value = item.category || '';
+      const categories = [...new Set(menu.map(m => m.category).filter(Boolean))];
+      document.getElementById('category-suggestions').innerHTML = categories.map(c => `<option value="${escapeHtml(c)}">`).join('');
+
+      await loadModalIngredients();
+      renderRecipeRows();
+      document.getElementById('dish-modal').classList.add('active');
+    }
+
+    function closeDishModal() { document.getElementById('dish-modal').classList.remove('active'); }
+
+    function saveDishModal() {
+      const id = document.getElementById('modal-id').value.trim();
+      const name = document.getElementById('modal-name').value;
+      const description = document.getElementById('modal-description').value;
+      const price = Number(document.getElementById('modal-price').value);
+      const image_url = document.getElementById('modal-image').value;
+      const category = document.getElementById('modal-category').value;
+      const prep_time_minutes = Number(document.getElementById('modal-prep-time').value) || 0;
+      const recipe = modalRecipe;
+
+      if (modalEditingId) {
+        api('/menu/' + encodeURIComponent(modalEditingId) + '?restaurant=' + restaurantId, { method: 'PUT', body: JSON.stringify({ name, description, price, image_url, category, prep_time_minutes, recipe }) })
+          .then(() => { closeDishModal(); toast('Dish updated.'); showScreen('menu'); })
+          .catch(error => alert(error.message));
+      } else {
+        api('/menu', { method: 'POST', body: JSON.stringify({ id, restaurant_id: restaurantId, name, description, price, image_url, category, prep_time_minutes, recipe }) })
+          .then(() => { closeDishModal(); toast('Dish added.'); showScreen('menu'); })
+          .catch(error => alert(error.message));
+      }
+    }
+
+    async function deleteDish(id) {
+      if (!confirm('Delete this dish?')) return;
+      await api('/menu/' + encodeURIComponent(id) + '?restaurant=' + restaurantId, { method: 'DELETE' });
+      toast('Dish deleted.');
+      showScreen('menu');
+    }
+
+    // ---------- Ingredients ----------
+    async function renderIngredients() {
+      const ingredients = await api('/ingredients?restaurant=' + restaurantId);
+      screen.innerHTML = `
+        <div class="screen-head">
+          <div><h1 class="screen-title">Ingredients</h1><p>Track raw material stock levels and what they cost.</p></div>
+          <button class="primary" onclick="openAddIngredientModal()">+ Add Ingredient</button>
+        </div>
+        <div class="list">${ingredients.length ? ingredients.map(i => `
+          <div class="row"><div><div class="row-title">${escapeHtml(i.name)}${i.quantity_in_stock <= i.low_stock_at ? '<span class="status void">low</span>' : ''}</div><div class="row-meta">${i.quantity_in_stock} ${escapeHtml(i.unit)} · alert at ${i.low_stock_at} · ${money(i.cost_per_unit)} per ${escapeHtml(i.unit)}</div></div>
+          <div class="row-actions"><button class="secondary" onclick="openEditIngredientModal(${i.id})">Edit</button><button class="danger" onclick="deleteIngredient(${i.id})">Delete</button></div></div>
+        `).join('') : '<div class="empty">No ingredients yet.</div>'}</div>
+      `;
+    }
+
+    function openAddIngredientModal() {
+      ingredientEditingId = null;
+      document.getElementById('ingredient-modal-title').textContent = 'Add Ingredient';
+      ['name', 'unit', 'qty', 'low', 'cost'].forEach(field => { document.getElementById('ing-modal-' + field).value = ''; });
+      document.getElementById('ingredient-modal').classList.add('active');
+    }
+
+    async function openEditIngredientModal(id) {
+      const ingredients = await api('/ingredients?restaurant=' + restaurantId);
+      const item = ingredients.find(i => i.id === id);
+      ingredientEditingId = id;
+      document.getElementById('ingredient-modal-title').textContent = 'Edit Ingredient';
+      document.getElementById('ing-modal-name').value = item.name;
+      document.getElementById('ing-modal-unit').value = item.unit;
+      document.getElementById('ing-modal-qty').value = item.quantity_in_stock;
+      document.getElementById('ing-modal-low').value = item.low_stock_at;
+      document.getElementById('ing-modal-cost').value = item.cost_per_unit || '';
+      document.getElementById('ingredient-modal').classList.add('active');
+    }
+
+    function closeIngredientModal() { document.getElementById('ingredient-modal').classList.remove('active'); }
+
+    function saveIngredientModal() {
+      const name = document.getElementById('ing-modal-name').value;
+      const unit = document.getElementById('ing-modal-unit').value;
+      const quantity_in_stock = Number(document.getElementById('ing-modal-qty').value);
+      const low_stock_at = Number(document.getElementById('ing-modal-low').value);
+      const cost_per_unit = Number(document.getElementById('ing-modal-cost').value) || 0;
+
+      if (ingredientEditingId) {
+        api('/ingredients/' + ingredientEditingId, { method: 'PUT', body: JSON.stringify({ name, unit, quantity_in_stock, low_stock_at, cost_per_unit }) })
+          .then(() => { closeIngredientModal(); toast('Ingredient updated.'); showScreen('ingredients'); });
+      } else {
+        api('/ingredients', { method: 'POST', body: JSON.stringify({ restaurant_id: restaurantId, name, unit, quantity_in_stock, low_stock_at, cost_per_unit }) })
+          .then(() => { closeIngredientModal(); toast('Ingredient added.'); showScreen('ingredients'); });
+      }
+    }
+
+    function deleteIngredient(id) {
+      if (confirm('Delete this ingredient?')) api('/ingredients/' + id, { method: 'DELETE' }).then(() => showScreen('ingredients'));
+    }
+
+    // ---------- QR codes ----------
+  async function renderQr() {
+  screen.innerHTML = `
+    <div class="screen-head"><div><h1 class="screen-title">QR Codes</h1><p>Generate a printable QR card for every table.</p></div></div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="field"><label>Number of tables</label><input id="table-count" type="number" min="0" value="${restaurant.number_of_tables || 0}"></div>
+        <div class="field"><label>Area (optional)</label><input id="qr-area" placeholder="e.g. Ground floor" onchange="renderQrGrid(restaurant.number_of_tables)"></div>
+        <div class="field"><label>Zone (optional)</label><input id="qr-zone" placeholder="e.g. Terrace" onchange="renderQrGrid(restaurant.number_of_tables)"></div>
+      </div>
+      <div class="button-row"><button class="primary" onclick="saveTableCount()">Save & generate</button></div>
+    </div>
+    <div class="section-label">Table QR cards</div>
+    <div id="qr-grid" class="metric-grid"></div>
+  `;
+  if (restaurant.number_of_tables > 0) renderQrGrid(restaurant.number_of_tables);
+}
+    async function saveTableCount() {
+      const count = Number(document.getElementById('table-count').value);
+      try {
+        await api('/restaurants/' + restaurantId + '/tables', { method: 'PUT', body: JSON.stringify({ number_of_tables: count }) });
+        restaurant.number_of_tables = count;
+        toast('Saved.');
+        renderQrGrid(count);
+      } catch (error) {
+        alert('⚠️ ' + error.message);
+        showScreen('billing');
+      }
+    }
+
+   async function renderQrGrid(count) {
+  const grid = document.getElementById('qr-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const area = document.getElementById('qr-area').value.trim();
+  const zone = document.getElementById('qr-zone').value.trim();
+
+  for (let i = 1; i <= count; i++) {
+    const qr = await api('/qr?restaurant=' + restaurantId + '&table=' + i);
+    const cardUrl = await drawQrCard(qr.dataUrl, {
+      tableLabel: 'Table ' + i, area, zone, venueName: restaurant.name
+    });
+    const card = document.createElement('div');
+    card.className = 'metric';
+    card.innerHTML = `
+      <div class="metric-label">Table ${i}</div>
+      <img src="${cardUrl}" style="width:100%;margin-top:10px;border-radius:8px;border:1px solid var(--admin-line);">
+      <a href="${cardUrl}" download="table-${i}-qr-card.png"><button class="secondary" style="margin-top:10px;width:100%;">Download</button></a>
+    `;
+    grid.appendChild(card);
+  }
+}
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+async function drawQrCard(qrDataUrl, { tableLabel, area, zone, venueName }) {
+  const W = 800, H = 1150;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const ink = '#1A1712', muted = '#6B6455', line = '#E7E0D2';
+
+  // Card background and border
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, W, H);
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = ink;
+  roundRect(ctx, 14, 14, W - 28, H - 28, 44);
+  ctx.stroke();
+
+  // Title and subtitle
+  ctx.textAlign = 'center';
+  ctx.fillStyle = ink;
+  ctx.font = 'bold 80px Arial, sans-serif';
+  ctx.letterSpacing = '14px';
+  ctx.fillText('SCAN ME', W / 2 + 7, 135);
+  ctx.letterSpacing = '0px';
+  ctx.fillStyle = muted;
+  ctx.font = 'bold 26px Arial, sans-serif';
+  ctx.fillText('Point your camera here to order', W / 2, 195);
+
+  // Area / Zone / Table row
+  const cols = [['AREA', area], ['ZONE', zone], ['TABLE / SEAT', tableLabel]];
+  const colW = (W - 140) / 3;
+  cols.forEach(([label, value], i) => {
+    const cx = 70 + colW * i + colW / 2;
+    ctx.fillStyle = muted;
+    ctx.font = 'bold 22px Arial, sans-serif';
+    ctx.letterSpacing = '2px';
+    ctx.fillText(label, cx, 290);
+    ctx.letterSpacing = '0px';
+    ctx.fillStyle = ink;
+    ctx.font = 'bold 34px Arial, sans-serif';
+    ctx.fillText(value || '—', cx, 345, colW - 20);
+    if (i > 0) {
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(70 + colW * i, 255);
+      ctx.lineTo(70 + colW * i, 360);
+      ctx.stroke();
+    }
+  });
+
+  // Divider
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(70, 395);
+  ctx.lineTo(W - 70, 395);
+  ctx.stroke();
+
+  // Corner brackets around the QR
+  const bx = 100, by = 430, bs = 600, bl = 80;
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 12;
+  ctx.lineCap = 'round';
+  [[bx, by, 1, 1], [bx + bs, by, -1, 1], [bx, by + bs, 1, -1], [bx + bs, by + bs, -1, -1]].forEach(([x, y, dx, dy]) => {
+    ctx.beginPath();
+    ctx.moveTo(x + dx * bl, y);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x, y + dy * bl);
+    ctx.stroke();
+  });
+
+  // The QR code itself
+  const qrImg = await loadImage(qrDataUrl);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(qrImg, 140, 470, 520, 520);
+
+  // Footer
+  ctx.fillStyle = ink;
+  ctx.font = 'bold 30px Arial, sans-serif';
+  ctx.fillText(venueName || '', W / 2, 1075, W - 160);
+  ctx.fillStyle = muted;
+  ctx.font = '22px Arial, sans-serif';
+  ctx.fillText('Powered by Meza', W / 2, 1110);
+
+  return canvas.toDataURL('image/png');
+}
+    // ---------- Team ----------
+    async function renderTeam() {
+      const staff = await api('/staff?restaurant=' + restaurantId);
+      screen.innerHTML = `
+        <div class="screen-head"><div><h1 class="screen-title">Venue team</h1><p>Create individual, PIN-based staff access.</p></div></div>
+        <div class="card">
+          <div class="form-grid">
+            <div class="field"><label>Full name</label><input id="staff-name" placeholder="Staff member"></div>
+            <div class="field"><label>Role</label><select id="staff-role"><option value="waitress">Waitress / waiter</option><option value="kitchen">Kitchen</option><option value="cashier">Cashier</option></select></div>
+            <div class="field"><label>4–6 digit PIN</label><input id="staff-pin" maxlength="6" type="password"></div>
+          </div>
+          <div class="button-row"><button class="primary" onclick="addStaff()">Add team member</button></div>
+        </div>
+        <div class="section-label">Active staff</div>
+        <div class="list">${staff.length ? staff.map(m => `
+          <div class="row"><div><div class="row-title">${escapeHtml(m.full_name)}${m.active ? '' : '<span class="status void">inactive</span>'}</div><div class="row-meta">${escapeHtml(m.role)}</div></div>
+          <div class="row-actions"><button class="secondary" onclick="resetPin(${m.id}, '${escapeHtml(m.full_name)}')">Reset PIN</button><button class="${m.active ? 'danger' : 'primary'}" onclick="toggleStaff(${m.id}, ${m.active})">${m.active ? 'Disable' : 'Enable'}</button><button class="danger" onclick="deleteStaff(${m.id})">Delete</button></div></div>
+        `).join('') : '<div class="empty">No staff accounts yet.</div>'}</div>
+      `;
+    }
+
+    function addStaff() {
+      const full_name = document.getElementById('staff-name').value;
+      const role = document.getElementById('staff-role').value;
+      const pin = document.getElementById('staff-pin').value;
+      api('/staff', { method: 'POST', body: JSON.stringify({ restaurant_id: restaurantId, full_name, role, pin }) })
+        .then(() => { toast('Staff account created.'); showScreen('team'); })
+        .catch(error => alert(error.message));
+    }
+
+    async function resetPin(id, name) {
+      const pin = prompt('New 4–6 digit PIN for ' + name);
+      if (!pin) return;
+      await api('/staff/' + id, { method: 'PUT', body: JSON.stringify({ restaurant_id: restaurantId, pin }) });
+      toast('PIN reset.');
+    }
+
+    async function toggleStaff(id, active) {
+      await api('/staff/' + id, { method: 'PUT', body: JSON.stringify({ restaurant_id: restaurantId, active: !active }) });
+      showScreen('team');
+    }
+    async function deleteStaff(id) {
+      if (!confirm('Delete this staff account?')) return;
+      await api('/staff/' + id, { method: 'DELETE' });
+      toast('Staff account deleted.');
+      showScreen('team');
+    }
+  
+
+    // ---------- Reports ----------
+    function setReportRange(kind) {
+      const today = new Date();
+      reportTo = isoDate(today);
+      if (kind === 'today') {
+        reportFrom = reportTo;
+      } else if (kind === 'week') {
+        const start = new Date(today);
+        start.setDate(start.getDate() - ((today.getDay() + 6) % 7));
+        reportFrom = isoDate(start);
+      } else if (kind === 'month') {
+        reportFrom = isoDate(new Date(today.getFullYear(), today.getMonth(), 1));
+      } else {
+        reportFrom = '2000-01-01';
+      }
+      renderReports();
+    }
+
+    function applyReportRange() {
+      const from = document.getElementById('rep-from').value;
+      const to = document.getElementById('rep-to').value;
+      if (!from || !to || from > to) { alert('Choose a valid date range.'); return; }
+      reportFrom = from;
+      reportTo = to;
+      renderReports();
+    }
+
+    function exportReport(type) {
+      window.location.href = `/reports/export?restaurant=${restaurantId}&from=${reportFrom}&to=${reportTo}&type=${type}`;
+    }
+
+    async function addExpense() {
+      const expense_date = document.getElementById('exp-date').value;
+      const category = document.getElementById('exp-category').value;
+      const description = document.getElementById('exp-description').value;
+      const amount = Number(document.getElementById('exp-amount').value);
+      if (!expense_date || !amount || amount <= 0) { alert('Enter a date and an amount greater than 0.'); return; }
+      try {
+        await api('/expenses', { method: 'POST', body: JSON.stringify({ restaurant_id: restaurantId, expense_date, category, description, amount }) });
+        toast('Expense added.');
+        renderReports();
+      } catch (error) { alert(error.message); }
+    }
+
+    async function deleteExpense(id) {
+      if (!confirm('Delete this expense?')) return;
+      await api('/expenses/' + id + '?restaurant=' + restaurantId, { method: 'DELETE' });
+      renderReports();
+    }
+
+    async function renderReports() {
+      if (!reportFrom || !reportTo) {
+        const t = new Date();
+        reportFrom = isoDate(new Date(t.getFullYear(), t.getMonth(), 1));
+        reportTo = isoDate(t);
+      }
+      const r = await api(`/reports?restaurant=${restaurantId}&from=${reportFrom}&to=${reportTo}`);
+      const netColor = r.netProfit < 0 ? 'var(--rust)' : 'var(--forest)';
+      const methods = Object.entries(r.byMethod);
+
+      const costWarning = (r.revenue > 0 && r.cogs === 0)
+        ? `<div class="empty" style="margin-top:14px;">No ingredient costs are recorded for these sales, so profit is shown before food costs. Add a cost per unit to your ingredients, and a recipe to each dish, for an accurate profit figure.</div>`
+        : '';
+
+      const methodRows = methods.length
+        ? methods.map(([m, amount]) => `<div class="row"><div class="row-title">${escapeHtml(methodLabels[m] || m)}</div><div class="row-title">${money(amount)}</div></div>`).join('')
+        : '<div class="empty">No paid sales in this period.</div>';
+
+      const itemRows = r.topItems.length
+        ? r.topItems.map(i => `<div class="row"><div class="row-title">${escapeHtml(i.name)}</div><div class="row-meta">${i.quantity} sold</div></div>`).join('')
+        : '<div class="empty">No items sold in this period.</div>';
+
+      const voidRows = r.voids.length
+        ? r.voids.map(v => `
+            <div class="row">
+              <div>
+                <div class="row-title">Table ${escapeHtml(v.table)}<span class="status ${escapeHtml(v.status)}">${escapeHtml(v.status)}</span>${v.refund_due ? '<span class="status void">refund due</span>' : ''}</div>
+                <div class="row-meta">${formatDateTime(v.created_at)} · ${escapeHtml(v.items)}${v.reason ? ' · Reason: ' + escapeHtml(v.reason) : ''}</div>
+              </div>
+              <div class="row-title">${money(v.total)}</div>
+            </div>`).join('')
+        : '<div class="empty">No voided orders in this period.</div>';
+
+      const expenseRows = r.expenses.length
+        ? r.expenses.map(e => `
+            <div class="row">
+              <div><div class="row-title">${escapeHtml(e.category || 'Expense')} — ${money(e.amount)}</div><div class="row-meta">${escapeHtml(e.expense_date)}${e.description ? ' · ' + escapeHtml(e.description) : ''}</div></div>
+              <div class="row-actions"><button class="danger" onclick="deleteExpense(${e.id})">Delete</button></div>
+            </div>`).join('')
+        : '<div class="empty">No expenses recorded in this period.</div>';
+
+      screen.innerHTML = `
+        <div class="screen-head"><div><h1 class="screen-title">Reports</h1><p>Sales, voids, and profit for the period you choose.</p></div></div>
+
+        <div class="card">
+          <div class="form-grid">
+            <div class="field"><label>From</label><input id="rep-from" type="date" value="${reportFrom === '2000-01-01' ? '' : reportFrom}"></div>
+            <div class="field"><label>To</label><input id="rep-to" type="date" value="${reportTo}"></div>
+          </div>
+          <div class="button-row">
+            <button class="primary" onclick="applyReportRange()">Apply</button>
+            <button class="secondary" onclick="setReportRange('today')">Today</button>
+            <button class="secondary" onclick="setReportRange('week')">This week</button>
+            <button class="secondary" onclick="setReportRange('month')">This month</button>
+            <button class="secondary" onclick="setReportRange('all')">All time</button>
+          </div>
+        </div>
+        ${costWarning}
+
+        <div class="section-label">Profit & loss</div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Revenue</div><div class="metric-value">${money(r.revenue)}</div><div class="metric-note">${r.orderCount} paid orders</div></div>
+          <div class="metric"><div class="metric-label">Cost of food</div><div class="metric-value">${money(r.cogs)}</div><div class="metric-note">Ingredients used in sold dishes</div></div>
+          <div class="metric"><div class="metric-label">Gross profit</div><div class="metric-value">${money(r.grossProfit)}</div><div class="metric-note">Revenue minus cost of food</div></div>
+          <div class="metric"><div class="metric-label">Waste from voids</div><div class="metric-value">${money(r.waste)}</div><div class="metric-note">Ingredients used on voided orders</div></div>
+          <div class="metric"><div class="metric-label">Expenses</div><div class="metric-value">${money(r.expensesTotal)}</div><div class="metric-note">${r.expenses.length} entries</div></div>
+          <div class="metric"><div class="metric-label">Net profit / loss</div><div class="metric-value" style="color:${netColor};">${money(r.netProfit)}</div><div class="metric-note">After food, waste and expenses</div></div>
+        </div>
+
+        <div class="section-label">Sales by payment method</div>
+        <div class="list">${methodRows}</div>
+
+        <div class="section-label">Most ordered items</div>
+        <div class="list">${itemRows}</div>
+
+        <div class="section-label">Void report</div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Voided orders</div><div class="metric-value">${r.voids.length}</div><div class="metric-note">Voided or rejected</div></div>
+          <div class="metric"><div class="metric-label">Voided value</div><div class="metric-value">${money(r.voidedValue)}</div><div class="metric-note">Sales that did not happen</div></div>
+          <div class="metric"><div class="metric-label">Refunds due</div><div class="metric-value">${money(r.refundsDue)}</div><div class="metric-note">Paid orders that were voided</div></div>
+        </div>
+        <div class="list" style="margin-top:14px;">${voidRows}</div>
+
+        <div class="section-label">Expenses</div>
+        <div class="card">
+          <div class="form-grid">
+            <div class="field"><label>Date</label><input id="exp-date" type="date" value="${reportTo}"></div>
+            <div class="field"><label>Category</label><input id="exp-category" placeholder="Rent, salaries, electricity..."></div>
+            <div class="field"><label>Description</label><input id="exp-description" placeholder="Optional note"></div>
+            <div class="field"><label>Amount (RWF)</label><input id="exp-amount" type="number" min="0"></div>
+          </div>
+          <div class="button-row"><button class="primary" onclick="addExpense()">Add expense</button></div>
+        </div>
+        <div class="list" style="margin-top:14px;">${expenseRows}</div>
+
+        <div class="section-label">Download as CSV</div>
+        <div class="button-row" style="margin-top:0;">
+          <button class="secondary" onclick="exportReport('summary')">Summary</button>
+          <button class="secondary" onclick="exportReport('sales')">Sales</button>
+          <button class="secondary" onclick="exportReport('voids')">Voids</button>
+          <button class="secondary" onclick="exportReport('expenses')">Expenses</button>
+        </div>
+      `;
+    }
+
+    // ---------- Payment setup ----------
+    function renderPayments() {
+      screen.innerHTML = `
+        <div class="screen-head"><div><h1 class="screen-title">Payment Setup</h1><p>Numbers customers will send payment to.</p></div></div>
+        <div class="card">
+          <div class="form-grid">
+            <div class="field"><label>MTN MoMo number</label><input id="pay-momo" value="${escapeHtml(restaurant.momo_number || '')}" placeholder="e.g. 0788123456"></div>
+            <div class="field"><label>Airtel Money number</label><input id="pay-airtel" value="${escapeHtml(restaurant.airtel_number || '')}" placeholder="e.g. 0738123456"></div>
+            <div class="field"><label>Urubuto Pay code</label><input id="pay-urubuto" value="${escapeHtml(restaurant.urubuto_code || '')}" placeholder="Merchant code"></div>
+          </div>
+          <div class="button-row"><button class="primary" onclick="savePaymentDetails()">Save</button></div>
+        </div>
+      `;
+    }
+
+    function savePaymentDetails() {
+      const momo_number = document.getElementById('pay-momo').value;
+      const airtel_number = document.getElementById('pay-airtel').value;
+      const urubuto_code = document.getElementById('pay-urubuto').value;
+      api('/restaurants/' + restaurantId + '/payment-details', { method: 'PUT', body: JSON.stringify({ momo_number, airtel_number, urubuto_code }) })
+        .then(() => {
+          restaurant.momo_number = momo_number;
+          restaurant.airtel_number = airtel_number;
+          restaurant.urubuto_code = urubuto_code;
+          toast('Payment details saved.');
+        });
+    }
+
+    // ---------- Session ----------
+    async function signOut() {
+      await api('/logout', { method: 'POST' });
+      window.location.href = 'login.html';
+    }
+
+    async function start() {
+      try {
+        const sessionData = await api('/admin/me');
+        restaurantId = sessionData.restaurantId;
+        await loadRestaurant();
+        showScreen('overview');
+      } catch {
+        window.location.href = 'login.html';
+      }
+    }
+
+    start();
+  </script>
+</body>
+</html>

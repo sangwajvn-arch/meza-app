@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sign in — Meza</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A8371E'/><text x='50' y='68' font-size='58' fill='%23FAF6EE' text-anchor='middle' font-family='sans-serif' font-weight='800'>M</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="staff-header">
+        <h1>Sign in to Meza</h1>
+        <p>Manage your restaurant</p>
+    </div>
+
+    <div class="staff-body">
+        <div class="panel">
+            <div class="field-group">
+                <label>Email</label>
+                <input type="text" id="email" placeholder="you@yourrestaurant.com">
+            </div>
+            <div class="field-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Your password">
+                <p style="margin-top:8px;"><a href="forgot-password.html">Forgot password ?</a></p>
+            </div>
+            <button class="btn-success" onclick="login()">Sign in</button>
+            <p style="margin-top:14px;">No account? <a href="register.html">Create a restaurant</a></p>
+        </div>
+    </div>
+
+    <script>
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    window.location.href = 'admin.html?restaurant=' + data.restaurantId;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+node_modules/
+.env
+meza.db
+sessions.sqlite
+*.sqlite
+*.sqlite3

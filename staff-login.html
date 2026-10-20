@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Staff Login — Meza</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="staff-header">
+        <h1>Staff Login</h1>
+        <p id="restaurant-label">Loading restaurant…</p>
+    </div>
+
+    <div class="staff-body">
+        <div class="panel">
+            <div class="field-group">
+                <label>Enter your PIN</label>
+                <input type="password" id="pin" placeholder="••••" maxlength="6">
+            </div>
+            <button class="btn-success" onclick="staffLogin()">Sign in</button>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const restaurantId = params.get('restaurant');
+
+        fetch('/restaurants/' + restaurantId)
+            .then(r => r.json())
+            .then(restaurant => { document.getElementById('restaurant-label').textContent = restaurant.name || 'Restaurant'; });
+
+        function staffLogin() {
+            const pin = document.getElementById('pin').value;
+            fetch('/staff-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ restaurant_id: restaurantId, pin })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else if (data.role === 'waitress') {
+                    window.location.href = 'waitress.html?restaurant=' + restaurantId;
+                } else if (data.role === 'kitchen') {
+                    window.location.href = 'kitchen.html?restaurant=' + restaurantId;
+                } else if (data.role === 'cashier') {
+                    window.location.href = 'cashier.html?restaurant=' + restaurantId;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

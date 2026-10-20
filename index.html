@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meza</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A8371E'/><text x='50' y='68' font-size='58' fill='%23FAF6EE' text-anchor='middle' font-family='sans-serif' font-weight='800'>M</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="view-welcome" class="view active">
+        <nav class="navbar">
+            <div class="brand"><span class="brand-icon">M</span><span id="nav-restaurant-name">Meza</span></div>
+            <div class="nav-links">
+                <a href="#home" data-i18n="home">Home</a>
+                <a href="#about" data-i18n="about">About</a>
+                <select onchange="setLanguage(this.value)" class="lang-select" id="lang-select">
+                    <option value="en">EN</option><option value="rw">RW</option><option value="fr">FR</option>
+                </select>
+                <button id="fullscreen-btn" type="button" aria-label="Toggle Fullscreen" title="Toggle Fullscreen">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                    </svg>
+                </button>
+                <button onclick="showMenu()" class="nav-menu-btn" data-i18n="menu">Menu</button>
+            </div>
+        </nav>
+
+        <main class="hero" id="home">
+            <div class="hero-content">
+                <div class="table-badge">● <span data-i18n="table">Table</span> <span id="hero-table-number">---</span></div>
+                <h1><span data-i18n="welcomePrefix">Welcome to</span> <span id="restaurant-name">Meza</span></h1>
+                <p class="hero-description" data-i18n="heroDesc">Discover delicious food, choose your favorites, and send your order directly to the kitchen.</p>
+                <div class="hero-buttons">
+                    <button onclick="showMenu()" class="explore-btn"><span data-i18n="exploreMenu">Explore Menu</span><span>→</span></button>
+                    <button onclick="scrollToAbout()" class="secondary-btn" data-i18n="howItWorks">How it works</button>
+                </div>
+            </div>
+            <div class="hero-decoration">
+                <div class="glow-circle"></div>
+                <div class="food-card"><span>🍽️</span><p data-i18n="foodCardLine1">Good food.</p><strong data-i18n="foodCardLine2">Good moments.</strong></div>
+            </div>
+        </main>
+
+        <section class="features" id="about">
+            <div class="table-actions">
+                <button onclick="sendRequest('call_waiter')" class="request-btn">🖐 <span data-i18n="callWaiter">Call Waiter</span></button>
+                <button onclick="sendRequest('request_bill')" class="request-btn">🧾 <span data-i18n="requestBill">Request Bill</span></button>
+            </div>
+            <div class="feature"><div class="feature-icon">🍴</div><h3 data-i18n="browseTitle">Browse</h3><p data-i18n="browseDesc">Explore our menu and discover your favorite dishes.</p></div>
+            <div class="feature"><div class="feature-icon">＋</div><h3 data-i18n="chooseTitle">Choose</h3><p data-i18n="chooseDesc">Select exactly what you want and adjust quantities.</p></div>
+            <div class="feature"><div class="feature-icon">⚡</div><h3 data-i18n="orderTitle">Order</h3><p data-i18n="orderDesc">Send your order directly to the restaurant kitchen.</p></div>
+        </section>
+
+        <footer><span data-i18n="poweredBy">Powered by</span> <strong>Meza</strong><span>·</span>Contact: mezaapp.rw@gmail.com<span>-</span>+250 793 234 866</footer>
+    </div>
+
+    <div id="view-categories" class="view">
+        <div class="page-header">
+            <button onclick="switchView('view-welcome')" class="back-btn" data-i18n="backHome">← Home</button>
+            <div><p id="table-label"></p><h2 data-i18n="exploreMenuHeading">Explore Menu</h2></div>
+        </div>
+        <div id="category-list"></div>
+        <div>
+            <button onclick="sendRequest('call_waiter')" class="request-btn">🖐 <span data-i18n="callWaiter">Call Waiter</span></button>
+            <button onclick="sendRequest('request_bill')" class="request-btn">🧾 <span data-i18n="requestBill">Request Bill</span></button>
+        </div>
+    </div>
+
+    <div id="view-dishes" class="view">
+        <button onclick="showCategories()" class="back-btn" data-i18n="backToCategories">← Back to categories</button>
+        <div>
+            <button onclick="sendRequest('call_waiter')" class="request-btn">🖐 <span data-i18n="callWaiter">Call Waiter</span></button>
+            <button onclick="sendRequest('request_bill')" class="request-btn">🧾 <span data-i18n="requestBill">Request Bill</span></button>
+        </div>
+        <h2 id="dishes-heading"></h2>
+        <div id="dish-list"></div>
+        <p class="totals"><span data-i18n="itemsLabel">Items</span>: <span id="total-items">0</span> &nbsp;·&nbsp; <span data-i18n="totalLabel">Total</span>: <span id="total-price">0</span> RWF; <span id="total-time-row" style="display:none;">⏱ <span id="total-time">0</span> </p>
+        <div class="bottom-space"></div>
+        <button id="cart-bar" onclick="submitOrder()">
+            <span id="cart-summary" data-i18n="addItems">Add items to order</span>
+            <span data-i18n="sendOrder">Send order →</span>
+        </button>
+    </div>
+
+    <div id="view-checkout" class="view">
+        <button onclick="showCategories()" class="back-btn">← Back to menu</button>
+        <h2>Checkout</h2>
+        <div style="max-width:600px;margin:0 auto;">
+            <div id="checkout-summary"></div>
+            <div class="section-heading" style="margin-top:24px;">Pay with</div>
+            <div id="payment-methods" style="display:grid;gap:10px;margin-bottom:20px;">
+                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('momo')">📱 MTN Mobile Money</button>
+                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('airtel')">📱 Airtel Money</button>
+                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('urubuto')">📱 Urubuto Pay</button>
+                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('card')">💳 Debit / Credit Card</button>
+            </div>
+            <div id="phone-entry" style="display:none;margin-bottom:16px;"></div>
+
+            <div id="sms-proof" style="display:none;margin-bottom:16px;">
+                <label style="font-weight:700;">Paste the payment confirmation SMS</label>
+                <textarea id="sms-input" rows="4" style="width:100%;margin-top:8px;" placeholder="Paste the SMS you received after paying..."></textarea>
+                <p id="sms-error" style="color:var(--rust);display:none;margin-top:8px;"></p>
+            </div>
+
+            <button id="pay-now-btn" style="width:100%;display:none;" onclick="processPayment()">Submit Payment Proof</button>
+            <div id="payment-status" style="display:none;text-align:center;padding:20px;"></div>
+            <div class="table-actions">
+                <button onclick="sendRequest('call_waiter')" class="request-btn">🖐 <span data-i18n="callWaiter">Call Waiter</span></button>
+                <button onclick="sendRequest('request_bill')" class="request-btn">🧾 <span data-i18n="requestBill">Request Bill</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="order-banner" class="order-banner">
+        <span id="banner-text" data-i18n="orderSent">Order sent to the kitchen — please wait for approval.</span>
+        <br><small data-i18n="doNotLeave">Do not leave this page.</small>
+    </div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const tableNumber = params.get('table') || 'unknown';
+    const restaurantId = params.get('restaurant');
+
+   let cart = {};
+let prices = {};
+let prepTimes = {};
+let allItems = [];
+    let currentCategory = null;
+    let hasActiveOrder = false;
+    let currentOrderId = null;
+    let pendingOrderId = null;
+    let selectedPaymentMethod = null;
+    let restaurant = {};
+
+    const translations = {
+        en: { home: 'Home', about: 'About', menu: 'Menu', welcomePrefix: 'Welcome to',
+            heroDesc: 'Discover delicious food, choose your favorites, and send your order directly to the kitchen.',
+            exploreMenu: 'Explore Menu', howItWorks: 'How it works', foodCardLine1: 'Good food.', foodCardLine2: 'Good moments.',
+            browseTitle: 'Browse', browseDesc: 'Explore our menu and discover your favorite dishes.',
+            chooseTitle: 'Choose', chooseDesc: 'Select exactly what you want and adjust quantities.',
+            orderTitle: 'Order', orderDesc: 'Send your order directly to the restaurant kitchen.',
+            poweredBy: 'Powered by', exploreMenuHeading: 'Explore Menu', backToCategories: '← Back to categories', backHome: '← Home',
+            table: 'Table', itemsLabel: 'Items', totalLabel: 'Total', addItems: 'Add items to order', sendOrder: 'Send order →',
+            orderSent: 'Order sent to the kitchen — please wait for approval.', doNotLeave: 'Do not leave this page.',
+            approved: 'Your order has been approved! It\'s being prepared.', ready: 'Your food is ready — enjoy your meal!',
+            callWaiter: 'Call Waiter', requestBill: 'Request Bill', requestSent: 'A staff member has been notified.' },
+
+        rw: { home: 'Ahabanza', about: 'Ibyerekeye', menu: 'Ibiribwa', welcomePrefix: 'Murakaza neza kuri',
+            heroDesc: 'Reba ibiribwa biryoshye, hitamo ibyo ukunda, hanyuma wohereze amafunguro yawe ku bakozi bategura ibiribwa.',
+            exploreMenu: 'Reba Ibiribwa', howItWorks: 'Uko bikora', foodCardLine1: 'Ibiribwa byiza.', foodCardLine2: 'Ibihe byiza.',
+            browseTitle: 'Shakisha', browseDesc: 'Reba ibiribwa byose kandi ubone ibyo ukunda.',
+            chooseTitle: 'Hitamo', chooseDesc: 'Hitamo neza icyo ushaka n\'umubare wacyo.',
+            orderTitle: 'Tumiza', orderDesc: 'Ohereza  amafunguro yawe ako kanya aho biteguriwe.',
+            poweredBy: 'Byakozwe na', exploreMenuHeading: 'Ibiribwa', backToCategories: '← Subira ku byiciro', backHome: '← Ahabanza',
+            table: 'Ameza', itemsLabel: 'Ibintu', totalLabel: 'Igiteranyo', addItems: 'Ongeraho ibintu', sendOrder: 'Ohereza ikirego →',
+            orderSent: 'Ikirego cyoherejwe ku bategura ibiribwa — tegereza kwemezwa.', doNotLeave: 'Ntukave kuri iyi paji.',
+            approved: 'Ikirego cyawe cyemejwe! Kirimo gutegurwa.', ready: 'Ibiribwa byawe biteguye — nezerwa!',
+            callWaiter: 'Hamagara Umukozi', requestBill: 'Saba Fagitire', requestSent: 'Umukozi yamenyeshejwe.' },
+
+        fr: { home: 'Accueil', about: 'À propos', menu: 'Menu', welcomePrefix: 'Bienvenue chez',
+            heroDesc: 'Découvrez des plats délicieux, choisissez vos favoris, et envoyez votre commande directement en cuisine.',
+            exploreMenu: 'Voir le menu', howItWorks: 'Comment ça marche', foodCardLine1: 'Bons plats.', foodCardLine2: 'Bons moments.',
+            browseTitle: 'Parcourir', browseDesc: 'Explorez notre menu et découvrez vos plats préférés.',
+            chooseTitle: 'Choisir', chooseDesc: 'Sélectionnez exactement ce que vous voulez et ajustez les quantités.',
+            orderTitle: 'Commander', orderDesc: 'Envoyez votre commande directement en cuisine.',
+            poweredBy: 'Propulsé par', exploreMenuHeading: 'Le Menu', backToCategories: '← Retour aux catégories', backHome: '← Accueil',
+            table: 'Table', itemsLabel: 'Articles', totalLabel: 'Total', addItems: 'Ajouter des articles', sendOrder: 'Envoyer →',
+            orderSent: 'Commande envoyée en cuisine — veuillez attendre la confirmation.', doNotLeave: 'Ne quittez pas cette page.',
+            approved: 'Votre commande a été approuvée ! Elle est en préparation.', ready: 'Votre repas est prêt — bon appétit !',
+            callWaiter: 'Appeler un serveur', requestBill: 'Demander l\'addition', requestSent: 'Un membre du personnel a été prévenu.' }
+    };
+
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const money = value => `${Number(value || 0).toLocaleString()} RWF`;
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+    fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    });
+
+    const categoryTranslations = {
+        'Main Courses': { en: 'Main Courses', rw: 'Ibiryo Nyamukuru', fr: 'Plats Principaux' },
+        'Pizzas': { en: 'Pizzas', rw: 'Pizza', fr: 'Pizzas' },
+        'Grilled Food': { en: 'Grilled Food', rw: 'Ibyokeje', fr: 'Grillades' },
+        'Boiled Food': { en: 'Boiled Food', rw: 'Ibiteguye mu Mazi', fr: 'Plats Bouillis' },
+        'Burgers & Sandwiches': { en: 'Burgers & Sandwiches', rw: 'Burger na Sandwiches', fr: 'Burgers et Sandwichs' },
+        "Kid's Menu": { en: "Kid's Menu", rw: 'Ibiribwa by\'Abana', fr: 'Menu Enfants' },
+        'Salad': { en: 'Salad', rw: 'Saladi', fr: 'Salade' },
+        'Dessert': { en: 'Dessert', rw: 'Dessert', fr: 'Dessert' },
+        'Juices': { en: 'Juices', rw: 'Amajus', fr: 'Jus' },
+        'Soda': { en: 'Soda', rw: 'Soda', fr: 'Soda' },
+        'Smoothies': { en: 'Smoothies', rw: 'Smoothie', fr: 'Smoothies' },
+        'Coffee & Hot Drinks': { en: 'Coffee & Hot Drinks', rw: 'Ikawa n\'Ibindi Bishyushye', fr: 'Café et Boissons Chaudes' }
+    };
+
+    function sendRequest(type) {
+        fetch('/requests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ restaurant_id: restaurantId, table: tableNumber, type })
+        })
+        .then(() => {
+            const t = translations[currentLang];
+            alert(t.requestSent);
+        });
+    }
+
+    function getCategoryLabel(category) {
+        const entry = categoryTranslations[category];
+        return entry ? entry[currentLang] : category;
+    }
+
+    function getDishName(item) {
+        if (currentLang === 'rw' && item.name_rw) return item.name_rw;
+        if (currentLang === 'fr' && item.name_fr) return item.name_fr;
+        return item.name;
+    }
+
+    function getDishDescription(item) {
+        if (currentLang === 'rw' && item.description_rw) return item.description_rw;
+        if (currentLang === 'fr' && item.description_fr) return item.description_fr;
+        return item.description || '';
+    }
+
+    let currentLang = localStorage.getItem('mezaLang') || 'en';
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('mezaLang', lang);
+        applyTranslations();
+        if (document.getElementById('view-categories').classList.contains('active')) loadCategories();
+        if (document.getElementById('view-dishes').classList.contains('active') && currentCategory) showDishes(currentCategory);
+    }
+
+    function applyTranslations() {
+        const t = translations[currentLang];
+        document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t[el.dataset.i18n]; });
+        document.getElementById('table-label').textContent = `${t.table}: ${tableNumber}`;
+        document.getElementById('hero-table-number').textContent = tableNumber;
+        updateTotals();
+    }
+
+    document.getElementById('lang-select').value = currentLang;
+
+    fetch('/restaurants/' + restaurantId)
+        .then(r => r.json())
+        .then(data => {
+            restaurant = data;
+            const name = restaurant.name || 'Welcome';
+            document.getElementById('restaurant-name').textContent = name;
+            document.getElementById('nav-restaurant-name').textContent = name;
+            document.title = name;
+        });
+
+    function switchView(id) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showMenu() { switchView('view-categories'); loadCategories(); }
+    function showCategories() { switchView('view-categories'); }
+    function scrollToAbout() { document.getElementById('about').scrollIntoView({ behavior: 'smooth' }); }
+
+    function loadCategories() {
+        fetch('/menu?restaurant=' + restaurantId)
+            .then(response => response.json())
+            .then(items => {
+                allItems = items;
+items.forEach(item => {
+    prices[item.id] = item.price;
+    prepTimes[item.id] = item.prep_time_minutes || 0;
+});
+                const categories = [...new Set(items.map(i => i.category || 'Other'))];
+                const container = document.getElementById('category-list');
+                container.innerHTML = '';
+                categories.forEach(category => {
+                    const div = document.createElement('div');
+                    div.className = 'category-card';
+                    div.innerHTML = `<div class="category-arrow">→</div><h3>${getCategoryLabel(category)}</h3><p>${getCategoryLabel(category)}</p>`;
+                    div.onclick = () => showDishes(category);
+                    container.appendChild(div);
+                });
+            });
+    }
+
+    function showDishes(category) {
+        currentCategory = category;
+        document.getElementById('dishes-heading').textContent = getCategoryLabel(category);
+        const dishes = allItems.filter(i => (i.category || 'Other') === category);
+        const container = document.getElementById('dish-list');
+        container.innerHTML = '';
+        dishes.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'dish-card';
+            div.innerHTML = `
+    ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}" class="dish-image">` : `<div class="dish-placeholder">🍽️</div>`}
+    <div class="dish-info">
+        <h3>${getDishName(item)}</h3>
+        <p>${getDishDescription(item)}</p>
+        ${item.prep_time_minutes ? `<span class="prep-time">⏱ ${item.prep_time_minutes} min</span>` : ''}
+        <strong class="price">${item.price.toLocaleString()} RWF</strong>
+        <div class="stepper">
+            <button onclick="changeQty('${item.id}', -1)">−</button>
+            <span id="count-${item.id}">${cart[item.id] || 0}</span>
+            <button onclick="changeQty('${item.id}', 1)">+</button>
+        </div>
+    </div>`;
+            container.appendChild(div);
+        });
+        switchView('view-dishes');
+    }
+
+    function changeQty(itemId, delta) {
+        const newQty = (cart[itemId] || 0) + delta;
+        if (newQty <= 0) {
+            delete cart[itemId];
+            const count = document.getElementById('count-' + itemId);
+            if (count) count.textContent = 0;
+        } else {
+            cart[itemId] = newQty;
+            const count = document.getElementById('count-' + itemId);
+            if (count) count.textContent = newQty;
+        }
+        updateTotals();
+    }
+
+    function updateTotals() {
+    let totalItems = 0, totalPrice = 0, totalTime = 0;
+    for (let id in cart) {
+        totalItems += cart[id];
+        totalPrice += cart[id] * prices[id];
+        totalTime = Math.max(totalTime, prepTimes[id] || 0);
+    }
+    document.getElementById('total-items').textContent = totalItems;
+    document.getElementById('total-price').textContent = totalPrice.toLocaleString();
+
+    const timeRow = document.getElementById('total-time-row');
+    if (totalTime > 0) {
+        document.getElementById('total-time').textContent = totalTime;
+        timeRow.style.display = 'inline';
+    } else {
+        timeRow.style.display = 'none';
+    }
+
+    const summary = document.getElementById('cart-summary');
+    const t = translations[currentLang];
+    summary.textContent = totalItems > 0
+        ? totalItems + ' ' + t.itemsLabel.toLowerCase() + ' · ' + totalPrice.toLocaleString() + ' RWF'
+        : t.addItems;
+}
+
+    function submitOrder() {
+        const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+        if (totalItems === 0) return;
+        fetch('/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ restaurant_id: restaurantId, table: tableNumber, items: cart })
+        })
+        .then(response => response.json())
+        .then(data => { pendingOrderId = data.orderId; showCheckout(); });
+    }
+
+    function showCheckout() {
+        let totalPrice = 0, lines = '';
+        for (let id in cart) {
+            const dish = allItems.find(i => i.id === id);
+            const name = dish ? getDishName(dish) : id;
+            totalPrice += cart[id] * prices[id];
+            lines += `<p>${name} × ${cart[id]} — ${(cart[id] * prices[id]).toLocaleString()} RWF</p>`;
+        }
+        document.getElementById('checkout-summary').innerHTML = `${lines}<p class="price" style="font-size:20px;margin-top:10px;">Total: ${totalPrice.toLocaleString()} RWF</p>`;
+        document.getElementById('payment-status').style.display = 'none';
+        document.getElementById('pay-now-btn').style.display = 'none';
+        document.getElementById('phone-entry').style.display = 'none';
+        document.getElementById('sms-proof').style.display = 'none';
+        document.getElementById('sms-input').value = '';
+        document.getElementById('sms-error').style.display = 'none';
+        document.getElementById('payment-methods').style.display = 'grid';
+        document.querySelectorAll('#payment-methods button').forEach(b => b.classList.remove('selected'));
+        switchView('view-checkout');
+    }
+
+    function selectPaymentMethod(method) {
+        selectedPaymentMethod = method;
+        document.querySelectorAll('#payment-methods button').forEach(b => b.classList.remove('selected'));
+        event.target.classList.add('selected');
+
+        const numbers = { momo: restaurant.momo_number, airtel: restaurant.airtel_number, urubuto: restaurant.urubuto_code };
+        const box = document.getElementById('phone-entry');
+
+        if (method === 'card') {
+            box.style.display = 'none';
+        } else {
+            box.style.display = 'block';
+            box.innerHTML = `<p style="font-weight:700;">Send payment to: ${numbers[method] || 'Not set up yet'}</p><p>Once sent, paste the confirmation SMS below and tap "Submit Payment Proof".</p>`;
+        }
+        document.getElementById('sms-proof').style.display = (method === 'card') ? 'none' : 'block';
+        document.getElementById('pay-now-btn').style.display = 'block';
+    }
+
+    function processPayment() {
+    if (selectedPaymentMethod === 'card') {
+        alert('Card payments are not set up yet. Please choose MoMo, Airtel, or Urubuto Pay.');
+        return;
+    }
+
+    const smsText = document.getElementById('sms-input').value.trim();
+    const errBox = document.getElementById('sms-error');
+    if (smsText.length < 20) {
+        errBox.textContent = 'Please paste the full payment SMS you received.';
+        errBox.style.display = 'block';
+        return;
+    }
+    errBox.style.display = 'none';
+
+    fetch('/orders/' + pendingOrderId + '/claim-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_method: selectedPaymentMethod, sms_text: smsText })
+    })
+    .then(response => response.json())
+    .then(data => {
+        currentOrderId = pendingOrderId;
+        cart = {};
+        updateTotals();
+        hasActiveOrder = true;
+        switchView('view-dishes');
+
+        const banner = document.getElementById('order-banner');
+        const text = banner.querySelector('#banner-text');
+        text.textContent = data.verified
+            ? 'Payment verified — waiting for the restaurant to confirm.'
+            : 'Payment proof submitted — waiting for the restaurant to check it.';
+        banner.style.background = 'var(--gold)';
+        banner.style.color = 'var(--ink)';
+        banner.style.display = 'block';
+    })
+    .catch(() => {
+        errBox.textContent = 'Something went wrong submitting your payment proof. Please try again.';
+        errBox.style.display = 'block';
+    });
+}
+
+
+    function watchOrderStatus() {
+        if (!currentOrderId) return;
+        fetch('/orders?restaurant=' + restaurantId)
+            .then(response => response.json())
+            .then(orders => {
+                const order = orders.find(o => o.id === currentOrderId);
+                if (!order) return;
+                const banner = document.getElementById('order-banner');
+                const t = translations[currentLang];
+
+                if (order.status === 'pending' && order.paid) {
+                    banner.querySelector('#banner-text').textContent = t.orderSent;
+                    banner.style.background = 'var(--forest)';
+                    banner.style.color = 'var(--bone)';
+                } else if (order.status === 'approved') {
+                    banner.querySelector('#banner-text').textContent = t.approved;
+                    banner.style.background = 'var(--gold)';
+                    banner.style.color = 'var(--ink)';
+                } else if (order.status === 'done') {
+                    banner.querySelector('#banner-text').textContent = t.ready;
+                    banner.style.background = 'var(--forest)';
+                    banner.style.color = 'var(--bone)';
+                    hasActiveOrder = false;
+                    currentOrderId = null;
+                } else if (order.status === 'rejected') {
+                    banner.querySelector('#banner-text').textContent = "We couldn't confirm your payment. Please see a staff member.";
+                    banner.style.background = 'var(--rust)';
+                    currentOrderId = null;
+                    hasActiveOrder = false;
+                }
+            });
+    }
+    setInterval(watchOrderStatus, 4000);
+
+    function checkMessages() {
+        fetch('/messages?restaurant=' + restaurantId + '&table=' + tableNumber)
+            .then(response => response.json())
+            .then(messages => {
+                messages.forEach(msg => {
+                    alert(msg.text);
+                    fetch('/messages/' + msg.id, { method: 'DELETE' });
+                });
+            });
+    }
+    setInterval(checkMessages, 4000);
+
+    window.addEventListener('beforeunload', function (e) {
+        if (hasActiveOrder) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    applyTranslations();
+</script>
+</body>
+</html>
