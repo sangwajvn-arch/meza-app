@@ -1,36 +1,36 @@
 {
-  "name": "meza-app",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "engines": {
+"name": "meza-app",
+"version": "1.0.0",
+"description": "",
+"main": "server.js",
+"engines": {
 "node": "22.x"
 },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "better-sqlite3": "^13.0.3",
-    "code": "^5.2.4",
-    "connect-sqlite3": "^0.9.18",
-    "dotenv": "^18.0.7",
-    "express": "^5.2.1",
-    "express-session": "^1.19.0",
-    "nodemailer": "^10.0.10",
-    "qr": "^0.7.0",
-    "qrcode": "^1.5.4"
-  },
-  "devDependencies": {
-  "node-gyp": "^11.0.0"
+"scripts": {
+"test": "echo "Error: no test specified" && exit 1",
+"start": "node server.js"
+},
+"keywords": [],
+"author": "",
+"license": "ISC",
+"type": "commonjs",
+"dependencies": {
+"bcrypt": "^6.0.0",
+"better-sqlite3": "^13.0.3",
+"code": "^5.2.4",
+"connect-sqlite3": "^0.9.18",
+"dotenv": "^18.0.7",
+"express": "^5.2.1",
+"express-session": "^1.19.0",
+"nodemailer": "^10.0.10",
+"qr": "^0.7.0",
+"qrcode": "^1.5.4"
+},
+"devDependencies": {
+"node-gyp": "^11.0.0"
+},
+"allowScripts": {
+"bcrypt@6.0.0": true,
+"better-sqlite3@13.0.3": true
 }
-  "allowScripts": {
-    "bcrypt@6.0.0": true,
-    "better-sqlite3@13.0.3": true
-  }
 }
