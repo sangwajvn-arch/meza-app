@@ -15,6 +15,22 @@ const PORT = 3000;
 
 // Only serve the public website folder. Never expose .env, server.js, or meza.db.
 app.use(express.static(path.join(__dirname, 'public')));
+// Clean URLs for all HTML pages
+app.get('/:page', (req, res, next) => {
+    const page = req.params.page;
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(page)) {
+        return next();
+    }
+
+    const filePath = path.join(__dirname, 'public', `${page}.html`);
+
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            next();
+        }
+    });
+});
 app.use(express.json({ limit: '100kb' }));
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.SESSION_SECRET) console.warn('WARNING: SESSION_SECRET is not set. Set a long random value in .env before deployment.');
