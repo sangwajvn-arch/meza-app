@@ -10,6 +10,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const db = require('./db');
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // Only serve the public website folder. Never expose .env, server.js, or meza.db.
