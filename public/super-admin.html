@@ -50,9 +50,9 @@
                         div.innerHTML = `
                             <div class="list-row-info">
                                 <strong>${r.name}</strong> <span style="color:var(--muted);font-weight:400;">(ID: ${r.id})</span><br>
-                                <span style="font-size:12px;color:var(--muted);">Customer: localhost:3000/?restaurant=${r.id}&table=1</span><br>
-                                <span style="font-size:12px;color:var(--muted);">Admin: localhost:3000/admin.html?restaurant=${r.id}</span>
-                                <span style="font-size:12px;color:var(--muted);">Staff login: localhost:3000/staff-login.html?restaurant=${r.id}</span>
+                                <span style="font-size:12px;color:var(--muted);">Customer: meza-app.rw/?restaurant=${r.id}&table=1</span><br>
+                                <span style="font-size:12px;color:var(--muted);">Admin: meza-app.rw/admin.html?restaurant=${r.id}</span>
+                                <span style="font-size:12px;color:var(--muted);">Staff login: meza-app.rw/staff-login.html?restaurant=${r.id}</span>
                             </div>
                             <div class="list-row-actions">
                                 <button class="btn-ghost" onclick="editRestaurant(${r.id}, '${r.name}')">Edit</button>
