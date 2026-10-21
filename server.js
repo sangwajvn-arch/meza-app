@@ -10,8 +10,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const db = require('./db');
 const app = express();
-app.set('trust proxy', 1);
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 // Only serve the public website folder. Never expose .env, server.js, or meza.db.
 app.use(express.static(path.join(__dirname, 'public')));
@@ -202,33 +201,48 @@ app.post('/forgot-password', limitAuth, async (req, res) => {
         const baseUrl = (process.env.APP_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
         const resetUrl = `${baseUrl}/reset-password.html?token=${token}`;
         try {
-            await transporter.sendMail({
-                from: `"Meza" <${process.env.EMAIL_USER}>`,
-                to: email,
-                subject: 'Reset your Meza password',
-                html: `
-                <div style="font-family: Arial, sans-serif; background:#FAF6EE; padding:40px 20px;">
-                  <div style="max-width:420px; margin:0 auto; text-align:center;">
-                    <div style="width:48px; height:48px; background:#A8371E; border-radius:12px; margin:0 auto 16px;">
-                      <span style="color:#FAF6EE; font-size:24px; font-weight:800; line-height:48px;">M</span>
-                    </div>
-                    <h2 style="color:#1A1712; margin:0 0 4px;">Meza</h2>
-                    <p style="color:#6B6455; font-size:13px; margin:0 0 28px;">Reset your account password</p>
-                    <div style="background:#fff; border:1px solid #E7E0D2; border-radius:12px; padding:28px; text-align:left;">
-                      <p style="color:#1A1712; font-size:15px;">Hi ${owner.full_name},</p>
-                      <p style="color:#1A1712; font-size:15px;">We received a request to reset the password on your Meza account. Click the button below to choose a new one.</p>
-                      <p style="color:#6B6455; font-size:13px;">This link expires in <strong>15 minutes</strong> and can only be used once.</p>
-                      <div style="text-align:center; margin:24px 0;">
-                        <a href="${resetUrl}" style="background:#A8371E; color:#FAF6EE; text-decoration:none; padding:14px 28px; border-radius:26px; font-weight:700; display:inline-block;">Reset my password</a>
-                      </div>
-                      <p style="color:#6B6455; font-size:12px;">Or copy this link: <a href="${resetUrl}" style="color:#A8371E;">${resetUrl}</a></p>
-                      <p style="color:#6B6455; font-size:12px;">If you didn't request this, you can safely ignore this email.</p>
-                    </div>
-                    <p style="color:#6B6455; font-size:11px; margin-top:24px;">Meza · Restaurant ordering platform</p>
-                  </div>
-                </div>`
-            });
-        } catch (error) { console.error('Email send failed:', error); }
+          const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        from: 'Meza <no-reply@meza-app.rw>',
+        to: [email],
+        subject: 'Reset your Meza password',
+        html: `
+        <div style="font-family: Arial, sans-serif; background:#FAF6EE; padding:40px 20px;">
+          <div style="max-width:420px; margin:0 auto; text-align:center;">
+            <div style="width:48px; height:48px; background:#A8371E; border-radius:12px; margin:0 auto 16px;">
+              <span style="color:#FAF6EE; font-size:24px; font-weight:800; line-height:48px;">M</span>
+            </div>
+            <h2 style="color:#1A1712; margin:0 0 4px;">Meza</h2>
+            <p style="color:#6B6455; font-size:13px; margin:0 0 28px;">Reset your account password</p>
+            <div style="background:#fff; border:1px solid #E7E0D2; border-radius:12px; padding:28px; text-align:left;">
+              <p style="color:#1A1712; font-size:15px;">Hi ${owner.full_name},</p>
+              <p style="color:#1A1712; font-size:15px;">We received a request to reset the password on your Meza account. Click the button below to choose a new one.</p>
+              <p style="color:#6B6455; font-size:13px;">This link expires in <strong>15 minutes</strong> and can only be used once.</p>
+              <div style="text-align:center; margin:24px 0;">
+                <a href="${resetUrl}" style="background:#A8371E; color:#FAF6EE; text-decoration:none; padding:14px 28px; border-radius:26px; font-weight:700; display:inline-block;">Reset my password</a>
+              </div>
+              <p style="color:#6B6455; font-size:12px;">Or copy this link: <a href="${resetUrl}" style="color:#A8371E;">${resetUrl}</a></p>
+              <p style="color:#6B6455; font-size:12px;">If you didn't request this, you can safely ignore this email.</p>
+            </div>
+            <p style="color:#6B6455; font-size:11px; margin-top:24px;">Meza · Restaurant ordering platform</p>
+          </div>
+        </div>`
+    })
+});
+
+const result = await response.json();
+
+if (!response.ok) {
+    throw new Error(`Resend API error ${response.status}: ${JSON.stringify(result)}`);
+}
+        } catch (error) {
+            console.error('Password reset email failed:', error);
+        }
     }
     res.send({ status: 'sent' });
 });
