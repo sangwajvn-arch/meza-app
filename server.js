@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const express = require('express');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
@@ -8,7 +6,6 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const db = require('./db');
 const app = express();
-app.set('trust proxy', 1);
 const PORT = 3000;
 
 app.use(express.static(__dirname));
