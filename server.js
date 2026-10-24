@@ -11,10 +11,26 @@ const crypto = require('crypto');
 const db = require('./db');
 const app = express();
 app.set('trust proxy', 1);
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Only serve the public website folder. Never expose .env, server.js, or meza.db.
 app.use(express.static(path.join(__dirname, 'public')));
+// Clean URLs for all HTML pages
+app.get('/:page', (req, res, next) => {
+    const page = req.params.page;
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(page)) {
+        return next();
+    }
+
+    const filePath = path.join(__dirname, 'public', `${page}.html`);
+
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            next();
+        }
+    });
+});
 app.use(express.json({ limit: '100kb' }));
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.SESSION_SECRET) console.warn('WARNING: SESSION_SECRET is not set. Set a long random value in .env before deployment.');
@@ -105,6 +121,21 @@ function requireOwner(req, res, restaurantId) {
     }
 
     return true;
+}
+
+// Owners and active cashiers may access order/payment workflows only for their own restaurant.
+function canManageOrders(req, restaurantId) {
+    if (!req.session || restaurantId == null) return false;
+    const ownerAllowed = Boolean(
+        req.session.ownerId && req.session.restaurantId != null &&
+        String(req.session.restaurantId) === String(restaurantId)
+    );
+    if (ownerAllowed) return true;
+    if (!req.session.staffId || req.session.staffRestaurantId == null ||
+        String(req.session.staffRestaurantId) !== String(restaurantId)) return false;
+    const staff = db.prepare('SELECT id, role, active, restaurant_id FROM staff WHERE id = ?').get(req.session.staffId);
+    return Boolean(staff && staff.active && staff.role === 'cashier' &&
+        String(staff.restaurant_id) === String(restaurantId));
 }
 
 // ================= AUTH =================
@@ -325,16 +356,8 @@ app.post('/orders', (req, res) => {
 app.get('/orders', (req, res) => {
     const restaurantId = req.query.restaurant;
 
-    if (
-        !req.session ||
-        !req.session.ownerId ||
-        !req.session.restaurantId ||
-        restaurantId == null ||
-        String(req.session.restaurantId) !== String(restaurantId)
-    ) {
-        return res.status(403).json({
-            error: 'Not authorized.'
-        });
+    if (!canManageOrders(req, restaurantId)) {
+        return res.status(403).json({ error: 'Not authorized.' });
     }
 
     try {
@@ -381,109 +404,41 @@ app.post('/orders/:id/claim-payment', (req, res) => {
 
 app.post('/orders/:id/confirm-payment', (req, res) => {
     const orderId = Number(req.params.id);
+    if (!validId(orderId)) return res.status(400).json({ error: 'Invalid order ID.' });
 
-    if (!Number.isSafeInteger(orderId) || orderId <= 0) {
-        return res.status(400).json({
-            error: 'Invalid order ID.'
-        });
+    const order = db.prepare('SELECT id, restaurant_id, status, paid FROM orders WHERE id = ?').get(orderId);
+    if (!order) return res.status(404).json({ error: 'Order not found.' });
+    if (!canManageOrders(req, order.restaurant_id)) return res.status(403).json({ error: 'Not authorized.' });
+    if (order.paid) return res.status(409).json({ error: 'This order is already marked as paid.' });
+    if (order.status !== 'awaiting_confirmation') {
+        return res.status(409).json({ error: 'This order is not waiting for payment confirmation.' });
     }
 
-    if (
-        !req.session ||
-        !req.session.ownerId ||
-        !req.session.restaurantId
-    ) {
-        return res.status(403).json({
-            error: 'Not authorized.'
-        });
-    }
-
-    const order = db.prepare(
-        'SELECT id, restaurant_id, status, paid FROM orders WHERE id = ?'
-    ).get(orderId);
-
-    if (!order) {
-        return res.status(404).json({
-            error: 'Order not found.'
-        });
-    }
-
-    if (
-        String(order.restaurant_id) !==
-        String(req.session.restaurantId)
-    ) {
-        return res.status(403).json({
-            error: 'Not authorized.'
-        });
-    }
-
-    if (order.paid) {
-        return res.status(409).json({
-            error: 'This order is already marked as paid.'
-        });
-    }
-
-    return res.status(403).json({
-        error: 'Payment must be verified before confirmation.'
-    });
+    // Clicking this button means the cashier/owner has independently checked the real payment.
+    const result = db.prepare(`
+        UPDATE orders
+        SET paid = 1, payment_status = 'paid', status = 'pending', sms_verified = 1
+        WHERE id = ? AND restaurant_id = ? AND paid = 0 AND status = 'awaiting_confirmation'
+    `).run(orderId, order.restaurant_id);
+    if (result.changes !== 1) return res.status(409).json({ error: 'Order changed. Refresh and try again.' });
+    return res.json({ status: 'confirmed', paid: true, orderStatus: 'pending' });
 });
 
 app.post('/orders/:id/reject-payment', (req, res) => {
     const orderId = Number(req.params.id);
+    if (!validId(orderId)) return res.status(400).json({ error: 'Invalid order ID.' });
+    const order = db.prepare('SELECT id, restaurant_id, status, paid FROM orders WHERE id = ?').get(orderId);
+    if (!order) return res.status(404).json({ error: 'Order not found.' });
+    if (!canManageOrders(req, order.restaurant_id)) return res.status(403).json({ error: 'Not authorized.' });
+    if (order.paid) return res.status(409).json({ error: 'A paid order cannot be rejected as unpaid.' });
+    if (order.status !== 'awaiting_confirmation') return res.status(409).json({ error: 'This order is not waiting for payment confirmation.' });
 
-    if (!Number.isSafeInteger(orderId) || orderId <= 0) {
-        return res.status(400).json({
-            error: 'Invalid order ID.'
-        });
-    }
-
-    if (
-        !req.session ||
-        !req.session.ownerId ||
-        !req.session.restaurantId
-    ) {
-        return res.status(403).json({
-            error: 'Not authorized.'
-        });
-    }
-
-    const order = db.prepare(
-        'SELECT id, restaurant_id, paid FROM orders WHERE id = ?'
-    ).get(orderId);
-
-    if (!order) {
-        return res.status(404).json({
-            error: 'Order not found.'
-        });
-    }
-
-    if (
-        String(order.restaurant_id) !==
-        String(req.session.restaurantId)
-    ) {
-        return res.status(403).json({
-            error: 'Not authorized.'
-        });
-    }
-
-    if (order.paid) {
-        return res.status(409).json({
-            error: 'A paid order cannot be rejected as unpaid.'
-        });
-    }
-
-    db.prepare(
-        'UPDATE orders SET status = ?, void_reason = ? WHERE id = ? AND restaurant_id = ? AND paid = 0'
-    ).run(
-        'rejected',
-        'Payment not received',
-        orderId,
-        req.session.restaurantId
-    );
-
-    return res.json({
-        status: 'rejected'
-    });
+    const result = db.prepare(`
+        UPDATE orders SET status = 'rejected', void_reason = 'Payment not received'
+        WHERE id = ? AND restaurant_id = ? AND paid = 0 AND status = 'awaiting_confirmation'
+    `).run(orderId, order.restaurant_id);
+    if (result.changes !== 1) return res.status(409).json({ error: 'Order changed. Refresh and try again.' });
+    return res.json({ status: 'rejected' });
 });
 
 app.post('/orders/:id/approve', (req, res) => {
@@ -795,15 +750,19 @@ app.post('/orders/:id/void', (req, res) => {
 app.post('/orders/:id/pay', (req, res) => {
     const orderId = Number(req.params.id);
     const body = req.body || {};
-    if (!validId(orderId) || !req.session.ownerId || !req.session.restaurantId) return res.status(403).json({ error: 'Not authorized.' });
-    if (!['cash', 'momo', 'airtel', 'urubuto'].includes(String(body.payment_method || '').toLowerCase())) return res.status(400).json({ error: 'Choose a valid payment method.' });
-    const order = db.prepare('SELECT id, paid FROM orders WHERE id = ? AND restaurant_id = ?').get(orderId, req.session.restaurantId);
+    if (!validId(orderId)) return res.status(400).json({ error: 'Invalid order ID.' });
+    const method = String(body.payment_method || '').toLowerCase();
+    if (!['cash', 'momo', 'airtel', 'urubuto'].includes(method)) return res.status(400).json({ error: 'Choose a valid payment method.' });
+
+    const order = db.prepare('SELECT id, restaurant_id, status, paid FROM orders WHERE id = ?').get(orderId);
     if (!order) return res.status(404).json({ error: 'Order not found.' });
+    if (!canManageOrders(req, order.restaurant_id)) return res.status(403).json({ error: 'Not authorized.' });
     if (order.paid) return res.status(409).json({ error: 'Order is already marked as paid.' });
-    // This is a manual owner confirmation, not automated SMS verification.
-    const result = db.prepare("UPDATE orders SET paid = 1, payment_status = 'paid', payment_method = ? WHERE id = ? AND restaurant_id = ? AND paid = 0").run(String(body.payment_method).toLowerCase(), orderId, req.session.restaurantId);
-    if (!result.changes) return res.status(409).json({ error: 'Order payment status changed. Refresh and try again.' });
-    res.send({ status: 'paid' });
+
+    const result = db.prepare("UPDATE orders SET paid = 1, payment_status = 'paid', payment_method = ?, status = CASE WHEN status = 'done' THEN status ELSE 'pending' END WHERE id = ? AND restaurant_id = ? AND paid = 0")
+        .run(method, orderId, order.restaurant_id);
+    if (result.changes !== 1) return res.status(409).json({ error: 'Order payment status changed. Refresh and try again.' });
+    return res.json({ status: 'paid' });
 });
 
 // ================= DASHBOARD =================
