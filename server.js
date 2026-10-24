@@ -433,15 +433,21 @@ app.post('/orders/:id/confirm-payment', (req, res) => {
         });
     }
 
-    if (order.paid) {
-        return res.status(409).json({
-            error: 'This order is already marked as paid.'
-        });
-    }
-
-    return res.status(403).json({
-        error: 'Payment must be verified before confirmation.'
+if (order.status !== 'awaiting_confirmation') {
+    return res.status(409).json({
+        error: 'This order is not awaiting payment confirmation.'
     });
+}
+
+db.prepare(`
+    UPDATE orders
+    SET paid = 1, sms_verified = 1
+    WHERE id = ? AND restaurant_id = ? AND paid = 0
+`).run(orderId, req.session.restaurantId);
+
+return res.json({
+    success: true,
+    message: 'Payment confirmed.'
 });
 
 app.post('/orders/:id/reject-payment', (req, res) => {
