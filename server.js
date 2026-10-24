@@ -10,27 +10,10 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const db = require('./db');
 const app = express();
-app.set('trust proxy', 1);
 const PORT = 3000;
 
 // Only serve the public website folder. Never expose .env, server.js, or meza.db.
 app.use(express.static(path.join(__dirname, 'public')));
-// Clean URLs for all HTML pages
-app.get('/:page', (req, res, next) => {
-    const page = req.params.page;
-
-    if (!/^[a-zA-Z0-9_-]+$/.test(page)) {
-        return next();
-    }
-
-    const filePath = path.join(__dirname, 'public', `${page}.html`);
-
-    res.sendFile(filePath, (err) => {
-        if (err) {
-            next();
-        }
-    });
-});
 app.use(express.json({ limit: '100kb' }));
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.SESSION_SECRET) console.warn('WARNING: SESSION_SECRET is not set. Set a long random value in .env before deployment.');
@@ -433,21 +416,15 @@ app.post('/orders/:id/confirm-payment', (req, res) => {
         });
     }
 
-if (order.status !== 'awaiting_confirmation') {
-    return res.status(409).json({
-        error: 'This order is not awaiting payment confirmation.'
+    if (order.paid) {
+        return res.status(409).json({
+            error: 'This order is already marked as paid.'
+        });
+    }
+
+    return res.status(403).json({
+        error: 'Payment must be verified before confirmation.'
     });
-}
-
-db.prepare(`
-    UPDATE orders
-    SET paid = 1, sms_verified = 1
-    WHERE id = ? AND restaurant_id = ? AND paid = 0
-`).run(orderId, req.session.restaurantId);
-
-return res.json({
-    success: true,
-    message: 'Payment confirmed.'
 });
 
 app.post('/orders/:id/reject-payment', (req, res) => {
