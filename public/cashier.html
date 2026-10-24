@@ -124,22 +124,72 @@
             });
         }
 
-        function confirmPayment(id) {
-            fetch('/orders/' + id + '/confirm-payment', { method: 'POST' }).then(() => loadOrders());
+       function confirmPayment(id) {
+    fetch('/orders/' + id + '/confirm-payment', {
+        method: 'POST'
+    })
+    .then(async response => {
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || 'Could not confirm payment.');
+            return;
         }
 
-        function rejectPayment(id) {
-            fetch('/orders/' + id + '/reject-payment', { method: 'POST' }).then(() => loadOrders());
+        alert('Payment confirmed successfully!');
+        loadOrders();
+    })
+    .catch(error => {
+        console.error('Confirm payment error:', error);
+        alert('Could not connect to the server.');
+    });
+}
+
+function rejectPayment(id) {
+    fetch('/orders/' + id + '/reject-payment', {
+        method: 'POST'
+    })
+    .then(async response => {
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || 'Could not reject payment.');
+            return;
         }
 
-        function recordCash(id) {
-            fetch('/orders/' + id + '/pay', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ payment_method: 'cash' })
-            }).then(() => loadOrders());
+        loadOrders();
+    })
+    .catch(error => {
+        console.error('Reject payment error:', error);
+        alert('Could not connect to the server.');
+    });
+}
+
+function recordCash(id) {
+    fetch('/orders/' + id + '/pay', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            payment_method: 'cash'
+        })
+    })
+    .then(async response => {
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || 'Could not record cash payment.');
+            return;
         }
-    checkSession();
+
+        loadOrders();
+    })
+    .catch(error => {
+        console.error('Record cash error:', error);
+        alert('Could not connect to the server.');
+    });
+}
     </script>
 </body>
 </html>
