@@ -789,6 +789,7 @@ app.get('/menu', (req, res) => {
     res.json(db.prepare('SELECT * FROM menu_items WHERE restaurant_id = ?').all(req.query.restaurant));
 });
 
+
 app.get('/menu/:id/recipe', (req, res) => {
     if (
         !req.session ||
@@ -800,10 +801,10 @@ app.get('/menu/:id/recipe', (req, res) => {
         });
     }
 
-    const menuItemId = Number(req.params.id);
+    const menuItemId = req.params.id.trim();
     const restaurantId = req.session.restaurantId;
 
-    if (!Number.isSafeInteger(menuItemId) || menuItemId <= 0) {
+    if (!menuItemId) {
         return res.status(400).json({
             error: 'Invalid menu item ID.'
         });
@@ -836,6 +837,7 @@ app.get('/menu/:id/recipe', (req, res) => {
         });
     }
 });
+
 
 app.post('/menu', (req, res) => {
     const body = req.body || {};
