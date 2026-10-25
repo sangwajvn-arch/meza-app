@@ -1,113 +1,198 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Super Admin — Restaurants</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A8371E'/><text x='50' y='68' font-size='58' fill='%23FAF6EE' text-anchor='middle' font-family='sans-serif' font-weight='800'>M</text></svg>">
+    <title>Meza — Platform admin</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .pw-wrap { position: relative; display: block; }
+        .pw-wrap input { width: 100%; box-sizing: border-box; padding-right: 48px; }
+        .pw-wrap .pw-eye { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); width: 38px; height: 38px; min-width: 0; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: #6B6455; cursor: pointer; }
+        .pw-wrap .pw-eye:hover { color: #1A1712; background: rgba(0, 0, 0, 0.05); }
+        .pw-wrap .pw-eye:focus-visible { outline: 2px solid #A8371E; outline-offset: 1px; }
+        .pw-wrap .pw-eye svg { width: 20px; height: 20px; display: block; pointer-events: none; }
+    </style>
 </head>
 <body>
     <div class="staff-header">
-        <h1>Super Admin</h1>
-        <p>Manage all restaurants on Meza</p>
+        <h1>Platform admin</h1>
+        <p>Manage every restaurant on Meza</p>
     </div>
 
     <div class="staff-body">
-        <div class="section-heading">Add a Restaurant</div>
-        <div class="panel">
+        <div id="login-box" class="panel">
             <div class="field-group">
-                <label>Restaurant name</label>
-                <input type="text" id="new-restaurant-name" placeholder="e.g. La Casemia Restaurant">
+                <label>Operator password</label>
+                <input type="password" id="super-password" placeholder="••••••••" autocomplete="current-password">
             </div>
-            <button class="btn-success" onclick="addRestaurant()">Add restaurant</button>
+            <button class="btn-success" onclick="superLogin()">Sign in</button>
         </div>
 
-        <div class="panel" id="edit-form" style="display:none;">
-            <div class="section-heading">Edit Restaurant</div>
-            <input type="hidden" id="edit-id">
-            <div class="field-group"><label>Name</label><input type="text" id="edit-name"></div>
-            <button class="btn-success" onclick="saveEdit()">Save changes</button>
-            <button class="btn-ghost" onclick="cancelEdit()">Cancel</button>
-        </div>
+        <div id="admin-area" style="display:none;">
+            <div class="section-heading">Add a restaurant</div>
+            <div class="panel">
+                <div class="field-group"><label>Restaurant name</label><input id="new-name"></div>
+                <div class="field-group"><label>Owner full name</label><input id="new-owner"></div>
+                <div class="field-group"><label>Owner email</label><input id="new-email"></div>
+                <div class="field-group"><label>Temporary password (8+ characters)</label><input type="password" id="new-password" autocomplete="new-password"></div>
+                <button class="btn-success" onclick="addRestaurant()">Create restaurant</button>
+            </div>
 
-        <div class="section-heading">Current Restaurants</div>
-        <div id="restaurant-list"></div>
+            <div class="section-heading">Restaurants</div>
+            <div id="restaurant-list"></div>
+            <p style="margin-top:24px;"><button class="btn-ghost" onclick="superLogout()">Sign out</button></p>
+        </div>
     </div>
 
     <script>
-        function loadRestaurants() {
-            fetch('/restaurants')
-                .then(response => response.json())
-                .then(restaurants => {
-                    const container = document.getElementById('restaurant-list');
-                    container.innerHTML = '';
-                    if (restaurants.length === 0) {
-                        container.innerHTML = '<div class="empty-state">No restaurants yet.</div>';
-                        return;
-                    }
-                    restaurants.forEach(r => {
-                        const div = document.createElement('div');
-                        div.className = 'list-row';
-                        div.innerHTML = `
-                            <div class="list-row-info">
-                                <strong>${r.name}</strong> <span style="color:var(--muted);font-weight:400;">(ID: ${r.id})</span><br>
-                                <span style="font-size:12px;color:var(--muted);">Customer: meza-app.rw/?restaurant=${r.id}&table=1</span><br>
-                                <span style="font-size:12px;color:var(--muted);">Admin: meza-app.rw/admin.html?restaurant=${r.id}</span>
-                                <span style="font-size:12px;color:var(--muted);">Staff login: meza-app.rw/staff-login.html?restaurant=${r.id}</span>
-                            </div>
-                            <div class="list-row-actions">
-                                <button class="btn-ghost" onclick="editRestaurant(${r.id}, '${r.name}')">Edit</button>
-                                <button class="btn-danger" onclick="deleteRestaurant(${r.id})">Delete</button>
-                            </div>
-                        `;
-                        container.appendChild(div);
-                    });
-                });
+        let restaurants = [];
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        async function call(url, options = {}) {
+            const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+            return data;
         }
 
-        function addRestaurant() {
-            const name = document.getElementById('new-restaurant-name').value;
-            fetch('/restaurants', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('new-restaurant-name').value = '';
-                loadRestaurants();
-            });
+        function showLogin() {
+            document.getElementById('login-box').style.display = 'block';
+            document.getElementById('admin-area').style.display = 'none';
         }
 
-        function editRestaurant(id, name) {
-            document.getElementById('edit-id').value = id;
-            document.getElementById('edit-name').value = name;
-            document.getElementById('edit-form').style.display = 'block';
+        function showAdmin() {
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('admin-area').style.display = 'block';
+            loadRestaurants();
         }
 
-        function cancelEdit() {
-            document.getElementById('edit-form').style.display = 'none';
+        let loggingIn = false;
+
+        async function superLogin() {
+            if (loggingIn) return;
+            loggingIn = true;
+            try {
+                await call('/super-login', { method: 'POST', body: JSON.stringify({ password: document.getElementById('super-password').value }) });
+                document.getElementById('super-password').value = '';
+                showAdmin();
+            } catch (e) { alert(e.message); }
+            finally { loggingIn = false; }
         }
 
-        function saveEdit() {
-            const id = document.getElementById('edit-id').value;
-            const name = document.getElementById('edit-name').value;
-            fetch('/restaurants/' + id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
-            }).then(() => {
-                document.getElementById('edit-form').style.display = 'none';
-                loadRestaurants();
-            });
+        async function superLogout() {
+            await call('/super-logout', { method: 'POST' });
+            showLogin();
         }
 
-        function deleteRestaurant(id) {
-            if (confirm('Delete this restaurant? This will also delete its menu and orders permanently.')) {
-                fetch('/restaurants/' + id, { method: 'DELETE' }).then(() => loadRestaurants());
+        async function loadRestaurants() {
+            restaurants = await call('/restaurants');
+            const container = document.getElementById('restaurant-list');
+            container.innerHTML = '';
+            if (restaurants.length === 0) {
+                container.innerHTML = '<div class="empty-state">No restaurants yet.</div>';
+                return;
             }
+            restaurants.forEach(r => {
+                const disabled = r.subscription_status === 'disabled';
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <div class="list-row">
+                        <div class="list-row-info">
+                            <strong>${esc(r.name)}</strong>
+                            <span style="color:var(--muted);font-weight:400;">(ID ${r.id} · ${esc(r.plan || 'Free')})</span>
+                            ${disabled ? '<span style="color:var(--rust);font-weight:800;"> · DISABLED</span>' : ''}<br>
+                            <span style="font-size:12px;color:var(--muted);">Customer: ${location.origin}/?restaurant=${r.id}&table=1</span><br>
+                            <span style="font-size:12px;color:var(--muted);">Staff login: ${location.origin}/staff-login.html?restaurant=${r.id}</span>
+                        </div>
+                        <div class="list-row-actions">
+                            <button class="btn-ghost" onclick="renameRestaurant(${r.id})">Rename</button>
+                            <button class="${disabled ? 'btn-success' : 'btn-danger'}" onclick="toggleSubscription(${r.id})">${disabled ? 'Enable' : 'Disable'}</button>
+                            <button class="btn-danger" onclick="deleteRestaurant(${r.id})">Delete</button>
+                        </div>
+                    </div>`;
+                container.appendChild(div);
+            });
         }
 
-        loadRestaurants();
+        async function addRestaurant() {
+            const name = document.getElementById('new-name').value.trim();
+            const fullName = document.getElementById('new-owner').value.trim();
+            const email = document.getElementById('new-email').value.trim();
+            const password = document.getElementById('new-password').value;
+            if (!name || !fullName || !email) { alert('Fill in the restaurant name, owner name and email.'); return; }
+            if (password.length < 8) { alert('The password must be at least 8 characters.'); return; }
+            try {
+                await call('/restaurants', { method: 'POST', body: JSON.stringify({ name, fullName, email, password }) });
+                ['new-name', 'new-owner', 'new-email', 'new-password'].forEach(id => { document.getElementById(id).value = ''; });
+                loadRestaurants();
+            } catch (e) { alert(e.message); }
+        }
+
+        async function renameRestaurant(id) {
+            const current = restaurants.find(r => r.id === id);
+            const name = prompt('New name:', current ? current.name : '');
+            if (!name) return;
+            await call('/restaurants/' + id, { method: 'PUT', body: JSON.stringify({ name }) });
+            loadRestaurants();
+        }
+
+        async function toggleSubscription(id) {
+            const current = restaurants.find(r => r.id === id);
+            const newStatus = current.subscription_status === 'disabled' ? 'active' : 'disabled';
+            let note = '';
+            if (newStatus === 'disabled') note = prompt('Reason (optional), e.g. unpaid since 1 October:') || '';
+            try {
+                await call('/restaurants/' + id + '/subscription', { method: 'PUT', body: JSON.stringify({ status: newStatus, note }) });
+                loadRestaurants();
+            } catch (e) { alert(e.message); }
+        }
+
+        async function deleteRestaurant(id) {
+            const current = restaurants.find(r => r.id === id);
+            if (!confirm('Delete "' + current.name + '" and ALL its data? This cannot be undone.')) return;
+            await call('/restaurants/' + id, { method: 'DELETE' });
+            loadRestaurants();
+        }
+
+        call('/super/me').then(showAdmin).catch(showLogin);
+    </script>
+    <script>
+        // Eye icon on every password box, and the Enter key presses the main button.
+        (function () {
+            var EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+            var EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+            document.querySelectorAll('input[type="password"]').forEach(function (input) {
+                var wrap = document.createElement('div');
+                wrap.className = 'pw-wrap';
+                input.parentNode.insertBefore(wrap, input);
+                wrap.appendChild(input);
+
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'pw-eye';
+                button.setAttribute('aria-label', 'Show password');
+                button.setAttribute('aria-pressed', 'false');
+                button.innerHTML = EYE;
+                button.addEventListener('click', function () {
+                    var show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    button.innerHTML = show ? EYE_OFF : EYE;
+                    button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    button.setAttribute('aria-pressed', show ? 'true' : 'false');
+                    input.focus();
+                });
+                wrap.appendChild(button);
+            });
+
+            document.querySelectorAll('input').forEach(function (input) { input.setAttribute('enterkeyhint', 'go'); });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key !== 'Enter' || event.isComposing || !event.target.matches('input')) return;
+                var box = event.target.closest('.panel') || document;
+                var go = box.querySelector('button.btn-success, button.primary');
+                if (go && !go.disabled) { event.preventDefault(); go.click(); }
+            });
+        })();
     </script>
 </body>
 </html>
