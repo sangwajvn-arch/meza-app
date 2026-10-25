@@ -509,19 +509,22 @@ html, body {
     }
 
     // ---------- QR codes ----------
-    async function renderQr() {
-      screen.innerHTML = `
-        <div class="screen-head"><div><h1 class="screen-title">QR Codes</h1><p>Generate a scannable code for every table.</p></div></div>
-        <div class="card">
-          <div class="field"><label>Number of tables</label><input id="table-count" type="number" min="0" value="${restaurant.number_of_tables || 0}"></div>
-          <div class="button-row"><button class="primary" onclick="saveTableCount()">Save & generate</button></div>
-        </div>
-        <div class="section-label">Table QR codes</div>
-        <div id="qr-grid" class="metric-grid"></div>
-      `;
-      if (restaurant.number_of_tables > 0) renderQrGrid(restaurant.number_of_tables);
-    }
-
+  async function renderQr() {
+  screen.innerHTML = `
+    <div class="screen-head"><div><h1 class="screen-title">QR Codes</h1><p>Generate a printable QR card for every table.</p></div></div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="field"><label>Number of tables</label><input id="table-count" type="number" min="0" value="${restaurant.number_of_tables || 0}"></div>
+        <div class="field"><label>Area (optional)</label><input id="qr-area" placeholder="e.g. Ground floor" onchange="renderQrGrid(restaurant.number_of_tables)"></div>
+        <div class="field"><label>Zone (optional)</label><input id="qr-zone" placeholder="e.g. Terrace" onchange="renderQrGrid(restaurant.number_of_tables)"></div>
+      </div>
+      <div class="button-row"><button class="primary" onclick="saveTableCount()">Save & generate</button></div>
+    </div>
+    <div class="section-label">Table QR cards</div>
+    <div id="qr-grid" class="metric-grid"></div>
+  `;
+  if (restaurant.number_of_tables > 0) renderQrGrid(restaurant.number_of_tables);
+}
     async function saveTableCount() {
       const count = Number(document.getElementById('table-count').value);
       try {
@@ -535,18 +538,28 @@ html, body {
       }
     }
 
-    async function renderQrGrid(count) {
-      const grid = document.getElementById('qr-grid');
-      grid.innerHTML = '';
-      for (let i = 1; i <= count; i++) {
-        const qr = await api('/qr?restaurant=' + restaurantId + '&table=' + i);
-        const card = document.createElement('div');
-        card.className = 'metric';
-        card.innerHTML = `<div class="metric-label">Table ${i}</div><img src="${qr.dataUrl}" style="width:100%;margin-top:10px;border-radius:8px;"><a href="${qr.dataUrl}" download="table-${i}-qr.png"><button class="secondary" style="margin-top:10px;width:100%;">Download</button></a>`;
-        grid.appendChild(card);
-      }
-    }
+ async function renderQrGrid(count) {
+  const grid = document.getElementById('qr-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const area = document.getElementById('qr-area').value.trim();
+  const zone = document.getElementById('qr-zone').value.trim();
 
+  for (let i = 1; i <= count; i++) {
+    const qr = await api('/qr?restaurant=' + restaurantId + '&table=' + i);
+    const cardUrl = await drawQrCard(qr.dataUrl, {
+      tableLabel: 'Table ' + i, area, zone, venueName: restaurant.name
+    });
+    const card = document.createElement('div');
+    card.className = 'metric';
+    card.innerHTML = `
+      <div class="metric-label">Table ${i}</div>
+      <img src="${cardUrl}" style="width:100%;margin-top:10px;border-radius:8px;border:1px solid var(--admin-line);">
+      <a href="${cardUrl}" download="table-${i}-qr-card.png"><button class="secondary" style="margin-top:10px;width:100%;">Download</button></a>
+    `;
+    grid.appendChild(card);
+  }
+}
     // ---------- Team ----------
     let teamMembers = [];
     let teamEditingId = null;
