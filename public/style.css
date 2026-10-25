@@ -712,3 +712,97 @@ footer {
         min-width: 105px;
     }
 }
+/* ===== MEZA MOBILE RESPONSIVENESS ===== */
+
+* {
+  box-sizing: border-box;
+  }
+
+html {
+width: 100%;
+overflow-x: hidden;
+}
+
+body {
+width: 100%;
+max-width: 100%;
+margin: 0;
+padding: 16px;
+overflow-x: hidden;
+}
+
+/* Make images fit the screen */
+img {
+max-width: 100%;
+height: auto;
+}
+
+/* Make forms fit phone screens */
+input,
+select,
+textarea,
+button {
+max-width: 100%;
+font: inherit;
+}
+
+input,
+select,
+textarea {
+width: 100%;
+}
+
+/* Make buttons easier to tap */
+button {
+min-height: 44px;
+cursor: pointer;
+}
+
+/* Make tables scroll horizontally when necessary */
+.table-container {
+width: 100%;
+overflow-x: auto;
+}
+
+/* Adapt layouts for phones */
+@media screen and (max-width: 600px) {
+body {
+padding: 12px;
+font-size: 16px;
+}
+
+```
+h1 {
+    font-size: 25px;
+    overflow-wrap: anywhere;
+}
+
+h2 {
+    font-size: 21px;
+}
+
+h3 {
+    font-size: 18px;
+}
+
+input,
+select,
+textarea,
+button {
+    width: 100%;
+    min-height: 44px;
+}
+
+form {
+    width: 100%;
+    max-width: 100%;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+```
+
+}
+
