@@ -1,21 +1,4 @@
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
 
-const dataDirectory = '/app/data';
-
-let databasePath;
-
-if (process.env.RAILWAY_ENVIRONMENT) {
-fs.mkdirSync(dataDirectory, { recursive: true });
-databasePath = path.join(dataDirectory, 'meza.db');
-} else {
-databasePath = path.join(__dirname, 'meza.db');
-}
-
-const db = new Database(databasePath);
-
-console.log('Meza database location:', databasePath);
 const Database = require('better-sqlite3');
 const db = new Database('meza.db');
 
