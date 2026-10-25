@@ -146,6 +146,7 @@
     let pendingOrderId = null;
     let selectedPaymentMethod = null;
     let restaurant = {};
+    let paymentConfirmationNotified = false;
 
     const translations = {
         en: { home: 'Home', about: 'About', menu: 'Menu', welcomePrefix: 'Welcome to',
@@ -485,6 +486,7 @@
         }))
         .then(data => {
             currentOrderId = pendingOrderId;
+            paymentConfirmationNotified = false;
             cart = {};
             updateTotals();
             hasActiveOrder = true;
