@@ -560,6 +560,110 @@ html, body {
     grid.appendChild(card);
   }
 }
+    function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+async function drawQrCard(qrDataUrl, { tableLabel, area, zone, venueName }) {
+  const W = 800, H = 1150;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const ink = '#1A1712', muted = '#6B6455', line = '#E7E0D2';
+
+  // Card background and border
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, W, H);
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = ink;
+  roundRect(ctx, 14, 14, W - 28, H - 28, 44);
+  ctx.stroke();
+
+  // Title and subtitle
+  ctx.textAlign = 'center';
+  ctx.fillStyle = ink;
+  ctx.font = 'bold 80px Arial, sans-serif';
+  ctx.letterSpacing = '14px';
+  ctx.fillText('SCAN ME', W / 2 + 7, 135);
+  ctx.letterSpacing = '0px';
+  ctx.fillStyle = muted;
+  ctx.font = 'bold 26px Arial, sans-serif';
+  ctx.fillText('Point your camera here to order', W / 2, 195);
+
+  // Area / Zone / Table row
+  const cols = [['AREA', area], ['ZONE', zone], ['TABLE / SEAT', tableLabel]];
+  const colW = (W - 140) / 3;
+  cols.forEach(([label, value], i) => {
+    const cx = 70 + colW * i + colW / 2;
+    ctx.fillStyle = muted;
+    ctx.font = 'bold 22px Arial, sans-serif';
+    ctx.letterSpacing = '2px';
+    ctx.fillText(label, cx, 290);
+    ctx.letterSpacing = '0px';
+    ctx.fillStyle = ink;
+    ctx.font = 'bold 34px Arial, sans-serif';
+    ctx.fillText(value || '—', cx, 345, colW - 20);
+    if (i > 0) {
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(70 + colW * i, 255);
+      ctx.lineTo(70 + colW * i, 360);
+      ctx.stroke();
+    }
+  });
+
+  // Divider
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(70, 395);
+  ctx.lineTo(W - 70, 395);
+  ctx.stroke();
+
+  // Corner brackets around the QR
+  const bx = 100, by = 430, bs = 600, bl = 80;
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 12;
+  ctx.lineCap = 'round';
+  [[bx, by, 1, 1], [bx + bs, by, -1, 1], [bx, by + bs, 1, -1], [bx + bs, by + bs, -1, -1]].forEach(([x, y, dx, dy]) => {
+    ctx.beginPath();
+    ctx.moveTo(x + dx * bl, y);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x, y + dy * bl);
+    ctx.stroke();
+  });
+
+  // The QR code itself
+  const qrImg = await loadImage(qrDataUrl);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(qrImg, 140, 470, 520, 520);
+
+  // Footer
+  ctx.fillStyle = ink;
+  ctx.font = 'bold 30px Arial, sans-serif';
+  ctx.fillText(venueName || '', W / 2, 1075, W - 160);
+  ctx.fillStyle = muted;
+  ctx.font = '22px Arial, sans-serif';
+  ctx.fillText('Powered by Meza', W / 2, 1110);
+
+  return canvas.toDataURL('image/png');
+}
     // ---------- Team ----------
     let teamMembers = [];
     let teamEditingId = null;
