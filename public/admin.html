@@ -315,9 +315,50 @@ html, body {
     }
 
     async function renderCashier() {
-      const orders = await api('/orders?restaurant=' + restaurantId);
+      const [orders, menu] = await Promise.all([
+        api('/orders?restaurant=' + restaurantId),
+        api('/menu?restaurant=' + restaurantId)
+      ]);
+      const priceOf = {};
+      menu.forEach(m => { priceOf[m.id] = m.price; });
+      const orderTotal = o => Object.entries(o.items || {}).reduce((sum, [id, qty]) => sum + (priceOf[id] || 0) * qty, 0);
+
+      const toCheck = orders.filter(o => o.status === 'awaiting_confirmation');
       const completed = orders.filter(o => o.status === 'done' && !o.paid);
-      screen.innerHTML = `<div class="screen-head"><div><h1 class="screen-title">Cashier</h1><p>Record payments for served orders that are still unpaid.</p></div></div><div class="list">${completed.length ? completed.map(o => orderRow(o, true)).join('') : '<div class="empty">No served orders waiting for payment.</div>'}</div>`;
+
+      const proofRow = o => {
+        const total = orderTotal(o);
+        const sms = o.sms_text || '';
+        const numbers = (sms.match(/\d[\d,]*(?:\.\d+)?/g) || []).map(n => Number(n.replace(/,/g, '')));
+        const amountFound = sms && numbers.includes(total);
+        const hint = !sms
+          ? '<span class="status void">no SMS pasted</span>'
+          : amountFound
+            ? '<span class="status ready">amount found in SMS</span>'
+            : '<span class="status void">amount not found in SMS</span>';
+        const serverNote = o.verify_reason
+          ? `<div class="row-meta">System note: ${escapeHtml(o.verify_reason)}</div>` : '';
+
+        return `<div class="row" style="align-items:flex-start;">
+          <div style="flex:1;">
+            <div class="row-title">Table ${escapeHtml(o.table)} — expected ${money(total)} via ${escapeHtml(methodLabels[o.payment_method] || o.payment_method || '')}${hint}</div>
+            <div style="margin-top:10px;padding:10px 12px;border:1px solid var(--admin-line);border-radius:8px;background:var(--bone);font-size:12px;white-space:pre-wrap;word-break:break-word;">${sms ? escapeHtml(sms) : 'The customer did not paste an SMS.'}</div>
+            ${serverNote}
+          </div>
+          <div class="row-actions">
+            <button class="primary" onclick="confirmPayment(${o.id})">Confirm payment</button>
+            <button class="danger" onclick="rejectPayment(${o.id})">Reject</button>
+          </div>
+        </div>`;
+      };
+
+      screen.innerHTML = `
+        <div class="screen-head"><div><h1 class="screen-title">Cashier</h1><p>Check payment proof, then record payments for served orders.</p></div><button class="secondary" onclick="showScreen('cashier')">Refresh</button></div>
+        <div class="section-label">Payments to check</div>
+        <div class="list">${toCheck.length ? toCheck.map(proofRow).join('') : '<div class="empty">No payment proofs waiting.</div>'}</div>
+        <div class="section-label">Served orders waiting for payment</div>
+        <div class="list">${completed.length ? completed.map(o => orderRow(o, true)).join('') : '<div class="empty">No served orders waiting for payment.</div>'}</div>
+      `;
     }
 
     async function orderAction(id, action) {
@@ -326,6 +367,25 @@ html, body {
         toast('Order updated.');
       } catch (error) { alert(error.message); }
       showScreen(document.querySelector('.nav-item.active').dataset.screen);
+    }
+
+    async function confirmPayment(id) {
+      if (!confirm('Have you checked this payment on your MoMo / Airtel account or statement?')) return;
+      try {
+        await api('/orders/' + id + '/confirm-payment', { method: 'POST' });
+        toast('Payment confirmed.');
+      } catch (error) { alert(error.message); }
+      showScreen('cashier');
+    }
+
+    async function rejectPayment(id) {
+      const reason = prompt('Why is this payment proof rejected?');
+      if (reason === null) return;
+      try {
+        await api('/orders/' + id + '/reject-payment', { method: 'POST', body: JSON.stringify({ reason }) });
+        toast('Payment rejected.');
+      } catch (error) { alert(error.message); }
+      showScreen('cashier');
     }
 
     async function voidOrder(id) {
