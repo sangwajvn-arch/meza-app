@@ -676,3 +676,39 @@ footer {
 #order-banner button {
     min-height: 40px;
 }
+/* Keep categories visible and swipeable */
+#category-list {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 16px;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* Prevent category cards from shrinking */
+#category-list .category-card {
+    flex: 0 0 auto;
+    min-width: 120px;
+    cursor: pointer;
+}
+
+/* Highlight the selected category */
+#category-list .category-card.selected {
+    outline: 2px solid #087f8c;
+    border-radius: 12px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    #category-list {
+        gap: 8px;
+        padding: 8px 12px;
+    }
+
+    #category-list .category-card {
+        min-width: 105px;
+    }
+}
