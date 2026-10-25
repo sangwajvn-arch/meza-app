@@ -503,40 +503,77 @@
         });
     }
 
-    function watchOrderStatus() {
-        if (!currentOrderId) return;
-        fetch('/orders?restaurant=' + encodeURIComponent(restaurantId || ''))
-            .then(response => response.json())
-            .then(orders => {
-                const order = orders.find(item => String(item.id) === String(currentOrderId));
-                if (!order) return;
-                const banner = document.getElementById('order-banner');
-                const t = translations[currentLang] || translations.en;
-                if (order.status === 'pending' && order.paid) {
-                    banner.querySelector('#banner-text').textContent = t.orderSent;
-                    banner.style.background = 'var(--forest)';
-                    banner.style.color = 'var(--bone)';
-                } else if (order.status === 'approved') {
-                    banner.querySelector('#banner-text').textContent = t.approved;
-                    banner.style.background = 'var(--gold)';
-                    banner.style.color = 'var(--ink)';
-                } else if (order.status === 'done') {
-                    banner.querySelector('#banner-text').textContent = t.ready;
-                    banner.style.background = 'var(--forest)';
-                    banner.style.color = 'var(--bone)';
-                    hasActiveOrder = false;
-                    currentOrderId = null;
-                } else if (order.status === 'rejected') {
-                    banner.querySelector('#banner-text').textContent = "We couldn't confirm your payment. Please see a staff member.";
-                    banner.style.background = 'var(--rust)';
-                    banner.style.color = 'var(--bone)';
-                    currentOrderId = null;
-                    hasActiveOrder = false;
-                }
-            })
-            .catch(error => console.error('Could not check order status:', error));
-    }
-    setInterval(watchOrderStatus, 4000);
+  
+function watchOrderStatus() {
+    if (!currentOrderId) return;
+
+    fetch('/orders?restaurant=' + encodeURIComponent(restaurantId || ''))
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Could not retrieve orders.');
+            }
+            return response.json();
+        })
+        .then(orders => {
+            const order = orders.find(
+                item => String(item.id) === String(currentOrderId)
+            );
+
+            if (!order) return;
+
+            const banner = document.getElementById('order-banner');
+            const bannerText = banner.querySelector('#banner-text');
+            const t = translations[currentLang] || translations.en;
+
+            // Detect when the cashier confirms payment.
+            if (order.paid && !paymentConfirmationNotified) {
+                paymentConfirmationNotified = true;
+
+                alert('Payment confirmed! Your order is now being processed.');
+            }
+
+            if (order.status === 'pending' && order.paid) {
+                bannerText.textContent = t.orderSent;
+                banner.style.background = 'var(--forest)';
+                banner.style.color = 'var(--bone)';
+                banner.style.display = 'block';
+
+            } else if (order.status === 'approved') {
+                bannerText.textContent = t.approved;
+                banner.style.background = 'var(--gold)';
+                banner.style.color = 'var(--ink)';
+                banner.style.display = 'block';
+
+            } else if (order.status === 'done') {
+                bannerText.textContent = t.ready;
+                banner.style.background = 'var(--forest)';
+                banner.style.color = 'var(--bone)';
+                banner.style.display = 'block';
+
+                hasActiveOrder = false;
+                currentOrderId = null;
+                paymentConfirmationNotified = false;
+
+            } else if (order.status === 'rejected') {
+                bannerText.textContent =
+                    "We couldn't confirm your payment. Please see a staff member.";
+
+                banner.style.background = 'var(--rust)';
+                banner.style.color = 'var(--bone)';
+                banner.style.display = 'block';
+
+                currentOrderId = null;
+                hasActiveOrder = false;
+                paymentConfirmationNotified = false;
+            }
+        })
+        .catch(error => {
+            console.error('Could not check order status:', error);
+        });
+}
+
+setInterval(watchOrderStatus, 4000);
+
 
     function checkMessages() {
         fetch('/messages?restaurant=' + encodeURIComponent(restaurantId || '') + '&table=' + encodeURIComponent(tableNumber))
