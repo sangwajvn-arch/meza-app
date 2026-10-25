@@ -596,4 +596,39 @@ footer {
 ```
 
 }
+/* Horizontally scrollable menu categories */
+#category-list {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 16px 18px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+#category-list > * {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+}
+
+/* Make category cards easy to tap */
+#category-list .category-card {
+    min-width: 130px;
+    cursor: pointer;
+}
+
+/* Phone screens */
+@media (max-width: 600px) {
+    #category-list {
+        gap: 10px;
+        padding: 10px 12px 16px;
+    }
+
+    #category-list .category-card {
+        min-width: 115px;
+    }
+}
 
