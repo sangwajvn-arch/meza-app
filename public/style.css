@@ -805,4 +805,37 @@ img {
 ```
 
 }
+```css
+/* Mobile adjustments for Meza */
+@media (max-width: 600px) {
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .container, .hero, main, section {
+    max-width: 100%;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  input, select, textarea, button {
+    max-width: 100%;
+  }
+
+  .category-list, #category-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dish-grid, .menu-grid, .food-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+```
+
 
