@@ -1369,6 +1369,7 @@ app.put('/restaurants/:id/subscription', requireSuper, (req, res) => {
 
 // Operator only: permanently delete a restaurant and everything that belongs to it.
 app.delete('/restaurants/:id', requireSuper, (req, res) => {
+    console.log('RESTAURANT DELETION REQUEST:', req.params.id);
     if (!validId(req.params.id)) return res.status(400).json({ error: 'Invalid restaurant ID.' });
     const id = Number(req.params.id);
     db.transaction(() => {
