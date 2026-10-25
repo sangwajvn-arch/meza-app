@@ -739,7 +739,12 @@ app.post('/orders/:id/confirm-payment', requireRole('waitress', 'cashier'), (req
             if (r.changes !== 1) throw new HttpError(409, 'This order can no longer be confirmed.');
             rememberTransactionId(order);
         })();
-        res.json({ status: 'pending' });
+       res.json({
+    success: true,
+    message: 'Payment confirmed successfully!',
+    paymentStatus: 'paid',
+    status: 'pending'
+});
     } catch (e) { sendError(res, e, 'Unable to confirm the payment.'); }
 });
 
