@@ -104,6 +104,15 @@ html, body {
 .plan-description { margin-top: 3px; color: #a3a8a4; font-size: 10px; }
 .billing-footnote { margin-top: 14px; color: #a3a8a4; font-size: 10px; }
 
+.team-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.team-row { flex-wrap: wrap; }
+.team-main { flex: 1 1 220px; min-width: 0; }
+.team-contact { margin-top: 6px; font-size: 12px; font-weight: 700; }
+.team-contact a { color: var(--rust); text-decoration: none; }
+.team-none { color: var(--muted); font-weight: 400; }
+.pin-chip { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--admin-line); background: var(--bone); color: var(--ink); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; font-weight: 800; letter-spacing: .12em; white-space: nowrap; }
+.team-edit { display: block; }
+
 @media (max-width: 900px) {
     .meza-app { display: block; }
     .sidebar { position: static; height: auto; }
@@ -127,7 +136,7 @@ html, body {
         <button class="nav-item" data-screen="cashier" onclick="showScreen('cashier')">Cashier</button>
         <button class="nav-item" data-screen="qr" onclick="showScreen('qr')">QR Codes</button>
         <div class="nav-section">Operations</div>
-        <button class="nav-item" data-screen="menu" onclick="showScreen('menu')"><span>Menu</button>
+        <button class="nav-item" data-screen="menu" onclick="showScreen('menu')">Menu</button>
         <button class="nav-item" data-screen="ingredients" onclick="showScreen('ingredients')">Inventory & Ingredients</button>
         <button class="nav-item" data-screen="team" onclick="showScreen('team')">Venue team</button>
         <div class="nav-section">Business</div>
@@ -139,17 +148,12 @@ html, body {
 
     <main class="main">
       <div class="topbar">
- 
         <div class="crumb" id="breadcrumb">Venue workspace</div>
         <button id="fullscreen-btn" type="button" title="Toggle Fullscreen">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
           </svg>
         </button>
-        <span>  </span>
-          <span id="pos-time" style="color: #1b1c1c; font-weight: bold;">--:--:--</span>
-  <span style="color: #080808; margin: 0 8px;">|</span>
-  <span id="pos-date" style="color: #101111;">--- --, ----</span>
         <button class="signout" onclick="signOut()">Sign out</button>
       </div>
       <section id="screen"></section>
@@ -251,22 +255,6 @@ html, body {
       document.body.appendChild(item);
       setTimeout(() => item.remove(), 2800);
     }
-    function startPOSClock() {
-    const timeEl = document.getElementById('pos-time');
-    const dateEl = document.getElementById('pos-date');
-
-    function update() {
-      const now = new Date();
-      timeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-      dateEl.textContent = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-    }
-
-    update();
-    setInterval(update, 1000);
-  }
-
-  // Start clock when DOM is loaded
-  document.addEventListener('DOMContentLoaded', startPOSClock);
 
     function setActive(name) {
       document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
@@ -282,7 +270,7 @@ html, body {
       document.getElementById('breadcrumb').textContent = screenLabels[name] || name;
       const renderers = {
         overview: renderOverview, orders: renderOrders, cashier: renderCashier, qr: renderQr, menu: renderMenu,
-        ingredients: renderIngredients, team: renderTeam, reports: renderReports, payments: renderPayments
+        ingredients: renderIngredients, team: renderTeam, reports: renderReports, payments: renderPayments, billing: renderBilling
       };
       try { await renderers[name](); }
       catch (error) { screen.innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`; }
@@ -312,7 +300,7 @@ html, body {
       const itemText = Object.entries(order.items || {}).map(([id, qty]) => `${escapeHtml(id)} × ${qty}`).join(' · ') || 'No items';
       const actions = [];
       if (order.status === 'awaiting_payment') actions.push(`<button class="danger" onclick="voidOrder(${order.id})">Void (unpaid)</button>`);
-      if (order.status === 'awaiting_confirmation') actions.push(`<button class="primary" onclick="showScreen('cashier')">Check proof</button>`);
+      if (order.status === 'awaiting_confirmation') actions.push(`<span style="font-size:11px;color:var(--muted);">Confirm on the Waitress page</span>`);
       if (order.status === 'pending') actions.push(`<button class="primary" onclick="orderAction(${order.id}, 'approve')">Approve</button>`);
       if (order.status === 'approved') actions.push(`<button class="primary" onclick="orderAction(${order.id}, 'ready')">Mark ready</button>`);
       if (order.status === 'ready') actions.push(`<button class="primary" onclick="orderAction(${order.id}, 'done')">Mark served</button>`);
@@ -327,50 +315,9 @@ html, body {
     }
 
     async function renderCashier() {
-      const [orders, menu] = await Promise.all([
-        api('/orders?restaurant=' + restaurantId),
-        api('/menu?restaurant=' + restaurantId)
-      ]);
-      const priceOf = {};
-      menu.forEach(m => { priceOf[m.id] = m.price; });
-      const orderTotal = o => Object.entries(o.items || {}).reduce((sum, [id, qty]) => sum + (priceOf[id] || 0) * qty, 0);
-
-      const toCheck = orders.filter(o => o.status === 'awaiting_confirmation');
+      const orders = await api('/orders?restaurant=' + restaurantId);
       const completed = orders.filter(o => o.status === 'done' && !o.paid);
-
-      const proofRow = o => {
-        const total = orderTotal(o);
-        const sms = o.sms_text || '';
-        const numbers = (sms.match(/\d[\d,]*(?:\.\d+)?/g) || []).map(n => Number(n.replace(/,/g, '')));
-        const amountFound = sms && numbers.includes(total);
-        const hint = !sms
-          ? '<span class="status void">no SMS pasted</span>'
-          : amountFound
-            ? '<span class="status ready">amount found in SMS</span>'
-            : '<span class="status void">amount not found in SMS</span>';
-        const serverNote = o.verify_reason
-          ? `<div class="row-meta">System note: ${escapeHtml(o.verify_reason)}</div>` : '';
-
-        return `<div class="row" style="align-items:flex-start;">
-          <div style="flex:1;">
-            <div class="row-title">Table ${escapeHtml(o.table)} — expected ${money(total)} via ${escapeHtml(methodLabels[o.payment_method] || o.payment_method || '')}${hint}</div>
-            <div style="margin-top:10px;padding:10px 12px;border:1px solid var(--admin-line);border-radius:8px;background:var(--bone);font-size:12px;white-space:pre-wrap;word-break:break-word;">${sms ? escapeHtml(sms) : 'The customer did not paste an SMS.'}</div>
-            ${serverNote}
-          </div>
-          <div class="row-actions">
-            <button class="primary" onclick="confirmPayment(${o.id})">Confirm payment</button>
-            <button class="danger" onclick="rejectPayment(${o.id})">Reject</button>
-          </div>
-        </div>`;
-      };
-
-      screen.innerHTML = `
-        <div class="screen-head"><div><h1 class="screen-title">Cashier</h1><p>Check payment proof, then record payments for served orders.</p></div><button class="secondary" onclick="showScreen('cashier')">Refresh</button></div>
-        <div class="section-label">Payments to check</div>
-        <div class="list">${toCheck.length ? toCheck.map(proofRow).join('') : '<div class="empty">No payment proofs waiting.</div>'}</div>
-        <div class="section-label">Served orders waiting for payment</div>
-        <div class="list">${completed.length ? completed.map(o => orderRow(o, true)).join('') : '<div class="empty">No served orders waiting for payment.</div>'}</div>
-      `;
+      screen.innerHTML = `<div class="screen-head"><div><h1 class="screen-title">Cashier</h1><p>Record payments for served orders that are still unpaid.</p></div></div><div class="list">${completed.length ? completed.map(o => orderRow(o, true)).join('') : '<div class="empty">No served orders waiting for payment.</div>'}</div>`;
     }
 
     async function orderAction(id, action) {
@@ -379,25 +326,6 @@ html, body {
         toast('Order updated.');
       } catch (error) { alert(error.message); }
       showScreen(document.querySelector('.nav-item.active').dataset.screen);
-    }
-
-    async function confirmPayment(id) {
-      if (!confirm('Have you checked this payment on your MoMo / Airtel account or statement?')) return;
-      try {
-        await api('/orders/' + id + '/confirm-payment', { method: 'POST' });
-        toast('Payment confirmed.');
-      } catch (error) { alert(error.message); }
-      showScreen('cashier');
-    }
-
-    async function rejectPayment(id) {
-      const reason = prompt('Why is this payment proof rejected?');
-      if (reason === null) return;
-      try {
-        await api('/orders/' + id + '/reject-payment', { method: 'POST', body: JSON.stringify({ reason }) });
-        toast('Payment rejected.');
-      } catch (error) { alert(error.message); }
-      showScreen('cashier');
     }
 
     async function voidOrder(id) {
@@ -470,11 +398,7 @@ html, body {
 
     async function openEditDishModal(id) {
       const menu = await api('/menu?restaurant=' + restaurantId);
-      const item = menu.find(d => String(d.id) === String(id));
-      if (!item) {
-        alert('Dish not found. Please refresh and try again.');
-        return;
-      }
+      const item = menu.find(d => d.id === id);
       const recipe = await api('/menu/' + encodeURIComponent(id) + '/recipe?restaurant=' + restaurantId);
 
       modalEditingId = id;
@@ -551,11 +475,7 @@ html, body {
 
     async function openEditIngredientModal(id) {
       const ingredients = await api('/ingredients?restaurant=' + restaurantId);
-      const item = ingredients.find(i => String(i.id) === String(id));
-      if (!item) {
-        alert('Ingredient not found. Please refresh and try again.');
-        return;
-      }
+      const item = ingredients.find(i => i.id === id);
       ingredientEditingId = id;
       document.getElementById('ingredient-modal-title').textContent = 'Edit Ingredient';
       document.getElementById('ing-modal-name').value = item.name;
@@ -577,12 +497,10 @@ html, body {
 
       if (ingredientEditingId) {
         api('/ingredients/' + ingredientEditingId, { method: 'PUT', body: JSON.stringify({ name, unit, quantity_in_stock, low_stock_at, cost_per_unit }) })
-          .then(() => { closeIngredientModal(); toast('Ingredient updated.'); showScreen('ingredients'); })
-          .catch(error => alert(error.message));
+          .then(() => { closeIngredientModal(); toast('Ingredient updated.'); showScreen('ingredients'); });
       } else {
         api('/ingredients', { method: 'POST', body: JSON.stringify({ restaurant_id: restaurantId, name, unit, quantity_in_stock, low_stock_at, cost_per_unit }) })
-          .then(() => { closeIngredientModal(); toast('Ingredient added.'); showScreen('ingredients'); })
-          .catch(error => alert(error.message));
+          .then(() => { closeIngredientModal(); toast('Ingredient added.'); showScreen('ingredients'); });
       }
     }
 
@@ -591,22 +509,19 @@ html, body {
     }
 
     // ---------- QR codes ----------
-  async function renderQr() {
-  screen.innerHTML = `
-    <div class="screen-head"><div><h1 class="screen-title">QR Codes</h1><p>Generate a printable QR card for every table.</p></div></div>
-    <div class="card">
-      <div class="form-grid">
-        <div class="field"><label>Number of tables</label><input id="table-count" type="number" min="0" value="${restaurant.number_of_tables || 0}"></div>
-        <div class="field"><label>Area (optional)</label><input id="qr-area" placeholder="e.g. Ground floor" onchange="renderQrGrid(restaurant.number_of_tables)"></div>
-        <div class="field"><label>Zone (optional)</label><input id="qr-zone" placeholder="e.g. Terrace" onchange="renderQrGrid(restaurant.number_of_tables)"></div>
-      </div>
-      <div class="button-row"><button class="primary" onclick="saveTableCount()">Save & generate</button></div>
-    </div>
-    <div class="section-label">Table QR cards</div>
-    <div id="qr-grid" class="metric-grid"></div>
-  `;
-  if (restaurant.number_of_tables > 0) renderQrGrid(restaurant.number_of_tables);
-}
+    async function renderQr() {
+      screen.innerHTML = `
+        <div class="screen-head"><div><h1 class="screen-title">QR Codes</h1><p>Generate a scannable code for every table.</p></div></div>
+        <div class="card">
+          <div class="field"><label>Number of tables</label><input id="table-count" type="number" min="0" value="${restaurant.number_of_tables || 0}"></div>
+          <div class="button-row"><button class="primary" onclick="saveTableCount()">Save & generate</button></div>
+        </div>
+        <div class="section-label">Table QR codes</div>
+        <div id="qr-grid" class="metric-grid"></div>
+      `;
+      if (restaurant.number_of_tables > 0) renderQrGrid(restaurant.number_of_tables);
+    }
+
     async function saveTableCount() {
       const count = Number(document.getElementById('table-count').value);
       try {
@@ -620,180 +535,156 @@ html, body {
       }
     }
 
-   async function renderQrGrid(count) {
-  const grid = document.getElementById('qr-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  const area = document.getElementById('qr-area').value.trim();
-  const zone = document.getElementById('qr-zone').value.trim();
-
-  for (let i = 1; i <= count; i++) {
-    const qr = await api('/qr?restaurant=' + restaurantId + '&table=' + i);
-    const cardUrl = await drawQrCard(qr.dataUrl, {
-      tableLabel: 'Table ' + i, area, zone, venueName: restaurant.name
-    });
-    const card = document.createElement('div');
-    card.className = 'metric';
-    card.innerHTML = `
-      <div class="metric-label">Table ${i}</div>
-      <img src="${cardUrl}" style="width:100%;margin-top:10px;border-radius:8px;border:1px solid var(--admin-line);">
-      <a href="${cardUrl}" download="table-${i}-qr-card.png"><button class="secondary" style="margin-top:10px;width:100%;">Download</button></a>
-    `;
-    grid.appendChild(card);
-  }
-}
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-async function drawQrCard(qrDataUrl, { tableLabel, area, zone, venueName }) {
-  const W = 800, H = 1150;
-  const canvas = document.createElement('canvas');
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  const ink = '#1A1712', muted = '#6B6455', line = '#E7E0D2';
-
-  // Card background and border
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, W, H);
-  ctx.lineWidth = 8;
-  ctx.strokeStyle = ink;
-  roundRect(ctx, 14, 14, W - 28, H - 28, 44);
-  ctx.stroke();
-
-  // Title and subtitle
-  ctx.textAlign = 'center';
-  ctx.fillStyle = ink;
-  ctx.font = 'bold 80px Arial, sans-serif';
-  ctx.letterSpacing = '14px';
-  ctx.fillText('SCAN ME', W / 2 + 7, 135);
-  ctx.letterSpacing = '0px';
-  ctx.fillStyle = muted;
-  ctx.font = 'bold 26px Arial, sans-serif';
-  ctx.fillText('Point your camera here to order', W / 2, 195);
-
-  // Area / Zone / Table row
-  const cols = [['AREA', area], ['ZONE', zone], ['TABLE / SEAT', tableLabel]];
-  const colW = (W - 140) / 3;
-  cols.forEach(([label, value], i) => {
-    const cx = 70 + colW * i + colW / 2;
-    ctx.fillStyle = muted;
-    ctx.font = 'bold 22px Arial, sans-serif';
-    ctx.letterSpacing = '2px';
-    ctx.fillText(label, cx, 290);
-    ctx.letterSpacing = '0px';
-    ctx.fillStyle = ink;
-    ctx.font = 'bold 34px Arial, sans-serif';
-    ctx.fillText(value || '—', cx, 345, colW - 20);
-    if (i > 0) {
-      ctx.strokeStyle = line;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(70 + colW * i, 255);
-      ctx.lineTo(70 + colW * i, 360);
-      ctx.stroke();
+    async function renderQrGrid(count) {
+      const grid = document.getElementById('qr-grid');
+      grid.innerHTML = '';
+      for (let i = 1; i <= count; i++) {
+        const qr = await api('/qr?restaurant=' + restaurantId + '&table=' + i);
+        const card = document.createElement('div');
+        card.className = 'metric';
+        card.innerHTML = `<div class="metric-label">Table ${i}</div><img src="${qr.dataUrl}" style="width:100%;margin-top:10px;border-radius:8px;"><a href="${qr.dataUrl}" download="table-${i}-qr.png"><button class="secondary" style="margin-top:10px;width:100%;">Download</button></a>`;
+        grid.appendChild(card);
+      }
     }
-  });
 
-  // Divider
-  ctx.strokeStyle = line;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(70, 395);
-  ctx.lineTo(W - 70, 395);
-  ctx.stroke();
-
-  // Corner brackets around the QR
-  const bx = 100, by = 430, bs = 600, bl = 80;
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 12;
-  ctx.lineCap = 'round';
-  [[bx, by, 1, 1], [bx + bs, by, -1, 1], [bx, by + bs, 1, -1], [bx + bs, by + bs, -1, -1]].forEach(([x, y, dx, dy]) => {
-    ctx.beginPath();
-    ctx.moveTo(x + dx * bl, y);
-    ctx.lineTo(x, y);
-    ctx.lineTo(x, y + dy * bl);
-    ctx.stroke();
-  });
-
-  // The QR code itself
-  const qrImg = await loadImage(qrDataUrl);
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(qrImg, 140, 470, 520, 520);
-
-  // Footer
-  ctx.fillStyle = ink;
-  ctx.font = 'bold 30px Arial, sans-serif';
-  ctx.fillText(venueName || '', W / 2, 1075, W - 160);
-  ctx.fillStyle = muted;
-  ctx.font = '22px Arial, sans-serif';
-  ctx.fillText('Powered by Meza', W / 2, 1110);
-
-  return canvas.toDataURL('image/png');
-}
     // ---------- Team ----------
+    let teamMembers = [];
+    let teamEditingId = null;
+    let showPins = true;
+
+    const roleLabels = { waitress: 'Waitress / waiter', kitchen: 'Kitchen', cashier: 'Cashier' };
+    const roleOptions = selected => Object.entries(roleLabels)
+      .map(([value, label]) => `<option value="${value}"${value === selected ? ' selected' : ''}>${label}</option>`).join('');
+
     async function renderTeam() {
-      const staff = await api('/staff?restaurant=' + restaurantId);
+      teamEditingId = null;
+      teamMembers = await api('/staff?restaurant=' + restaurantId);
       screen.innerHTML = `
-        <div class="screen-head"><div><h1 class="screen-title">Venue team</h1><p>Create individual, PIN-based staff access.</p></div></div>
+        <div class="screen-head"><div><h1 class="screen-title">Venue team</h1><p>Create PIN-based staff access, see each worker's PIN and contact, and remove people who leave.</p></div></div>
         <div class="card">
           <div class="form-grid">
             <div class="field"><label>Full name</label><input id="staff-name" placeholder="Staff member"></div>
-            <div class="field"><label>Role</label><select id="staff-role"><option value="waitress">Waitress / waiter</option><option value="kitchen">Kitchen</option><option value="cashier">Cashier</option></select></div>
-            <div class="field"><label>4–6 digit PIN</label><input id="staff-pin" maxlength="6" type="password"></div>
+            <div class="field"><label>Role</label><select id="staff-role">${roleOptions('waitress')}</select></div>
+            <div class="field"><label>Phone / contact</label><input id="staff-phone" type="tel" placeholder="e.g. 0788 123 456"></div>
+            <div class="field"><label>4–6 digit PIN</label><input id="staff-pin" maxlength="6" inputmode="numeric" placeholder="e.g. 4821"></div>
           </div>
           <div class="button-row"><button class="primary" onclick="addStaff()">Add team member</button></div>
         </div>
-        <div class="section-label">Active staff</div>
-        <div class="list">${staff.length ? staff.map(m => `
-          <div class="row"><div><div class="row-title">${escapeHtml(m.full_name)}${m.active ? '' : '<span class="status void">inactive</span>'}</div><div class="row-meta">${escapeHtml(m.role)}</div></div>
-          <div class="row-actions"><button class="secondary" onclick="resetPin(${m.id}, '${escapeHtml(m.full_name)}')">Reset PIN</button><button class="${m.active ? 'danger' : 'primary'}" onclick="toggleStaff(${m.id}, ${m.active})">${m.active ? 'Disable' : 'Enable'}</button><button class="danger" onclick="deleteStaff(${m.id})">Delete</button></div></div>
-        `).join('') : '<div class="empty">No staff accounts yet.</div>'}</div>
+        <div class="team-head">
+          <div class="section-label">Team members (${teamMembers.length})</div>
+          <button class="secondary" id="pin-toggle" onclick="togglePins()">${showPins ? 'Hide PINs' : 'Show PINs'}</button>
+        </div>
+        <div class="list" id="team-list"></div>
       `;
+      drawTeamList();
     }
 
-    function addStaff() {
-      const full_name = document.getElementById('staff-name').value;
-      const role = document.getElementById('staff-role').value;
-      const pin = document.getElementById('staff-pin').value;
-      api('/staff', { method: 'POST', body: JSON.stringify({ restaurant_id: restaurantId, full_name, role, pin }) })
-        .then(() => { toast('Staff account created.'); showScreen('team'); })
-        .catch(error => alert(error.message));
+    function drawTeamList() {
+      const list = document.getElementById('team-list');
+      if (!list) return;
+      if (!teamMembers.length) { list.innerHTML = '<div class="empty">No staff accounts yet.</div>'; return; }
+      list.innerHTML = teamMembers.map(m => teamEditingId === m.id ? teamEditRow(m) : teamRow(m)).join('');
     }
 
-    async function resetPin(id, name) {
-      const pin = prompt('New 4–6 digit PIN for ' + name);
-      if (!pin) return;
-      await api('/staff/' + id, { method: 'PUT', body: JSON.stringify({ restaurant_id: restaurantId, pin }) });
-      toast('PIN reset.');
+    function teamRow(m) {
+      const phone = (m.phone || '').trim();
+      const dial = phone.replace(/[^+\d]/g, '');
+      return `
+        <div class="row team-row">
+          <div class="team-main">
+            <div class="row-title">${escapeHtml(m.full_name)}<span class="status ${m.active ? 'done' : 'void'}">${m.active ? 'active' : 'disabled'}</span></div>
+            <div class="row-meta">${escapeHtml(roleLabels[m.role] || m.role)}</div>
+            <div class="team-contact">${phone ? `<a href="tel:${escapeHtml(dial)}">${escapeHtml(phone)}</a>` : '<span class="team-none">No contact saved</span>'}</div>
+          </div>
+          <div class="pin-chip">${showPins ? 'PIN ' + escapeHtml(m.pin) : 'PIN ••••'}</div>
+          <div class="row-actions">
+            <button class="secondary" onclick="editStaff(${m.id})">Edit</button>
+            <button class="secondary" onclick="toggleStaff(${m.id})">${m.active ? 'Disable' : 'Enable'}</button>
+            <button class="danger" onclick="deleteStaff(${m.id})">Delete</button>
+          </div>
+        </div>`;
     }
 
-    async function toggleStaff(id, active) {
-      await api('/staff/' + id, { method: 'PUT', body: JSON.stringify({ restaurant_id: restaurantId, active: !active }) });
-      showScreen('team');
+    function teamEditRow(m) {
+      return `
+        <div class="row team-edit">
+          <div class="form-grid">
+            <div class="field"><label>Full name</label><input id="edit-name" value="${escapeHtml(m.full_name)}"></div>
+            <div class="field"><label>Role</label><select id="edit-role">${roleOptions(m.role)}</select></div>
+            <div class="field"><label>Phone / contact</label><input id="edit-phone" type="tel" value="${escapeHtml(m.phone || '')}"></div>
+            <div class="field"><label>4–6 digit PIN</label><input id="edit-pin" maxlength="6" inputmode="numeric" value="${escapeHtml(m.pin)}"></div>
+            <div class="wide button-row" style="margin-top:0;">
+              <button class="primary" onclick="saveStaff(${m.id})">Save changes</button>
+              <button class="secondary" onclick="cancelEditStaff()">Cancel</button>
+            </div>
+          </div>
+        </div>`;
     }
+
+    function togglePins() {
+      showPins = !showPins;
+      const button = document.getElementById('pin-toggle');
+      if (button) button.textContent = showPins ? 'Hide PINs' : 'Show PINs';
+      drawTeamList();
+    }
+
+    async function addStaff() {
+      const body = {
+        restaurant_id: restaurantId,
+        full_name: document.getElementById('staff-name').value.trim(),
+        role: document.getElementById('staff-role').value,
+        phone: document.getElementById('staff-phone').value.trim(),
+        pin: document.getElementById('staff-pin').value.trim()
+      };
+      if (!body.full_name) { alert("Enter the worker's name."); return; }
+      if (!/^\d{4,6}$/.test(body.pin)) { alert('The PIN must be 4 to 6 digits.'); return; }
+      try {
+        await api('/staff', { method: 'POST', body: JSON.stringify(body) });
+        toast('Team member added.');
+        showScreen('team');
+      } catch (error) { alert(error.message); }
+    }
+
+    function editStaff(id) { teamEditingId = id; drawTeamList(); }
+    function cancelEditStaff() { teamEditingId = null; drawTeamList(); }
+
+    async function saveStaff(id) {
+      const body = {
+        restaurant_id: restaurantId,
+        full_name: document.getElementById('edit-name').value.trim(),
+        role: document.getElementById('edit-role').value,
+        phone: document.getElementById('edit-phone').value.trim(),
+        pin: document.getElementById('edit-pin').value.trim()
+      };
+      if (!body.full_name) { alert("Enter the worker's name."); return; }
+      if (!/^\d{4,6}$/.test(body.pin)) { alert('The PIN must be 4 to 6 digits.'); return; }
+      try {
+        await api('/staff/' + id, { method: 'PUT', body: JSON.stringify(body) });
+        toast('Changes saved.');
+        showScreen('team');
+      } catch (error) { alert(error.message); }
+    }
+
+    async function toggleStaff(id) {
+      const member = teamMembers.find(m => m.id === id);
+      if (!member) return;
+      try {
+        await api('/staff/' + id, { method: 'PUT', body: JSON.stringify({ restaurant_id: restaurantId, active: !member.active }) });
+        toast(member.active ? 'Worker disabled.' : 'Worker enabled.');
+        showScreen('team');
+      } catch (error) { alert(error.message); }
+    }
+
     async function deleteStaff(id) {
-      if (!confirm('Delete this staff account?')) return;
-      await api('/staff/' + id, { method: 'DELETE' });
-      toast('Staff account deleted.');
-      showScreen('team');
+      const member = teamMembers.find(m => m.id === id);
+      if (!member) return;
+      if (!confirm('Delete ' + member.full_name + '?\n\nThey will lose access immediately and this cannot be undone.\n(Choose Disable instead if they might come back.)')) return;
+      try {
+        await api('/staff/' + id, { method: 'DELETE' });
+        toast('Worker deleted.');
+        showScreen('team');
+      } catch (error) { alert(error.message); }
     }
-  
 
     // ---------- Reports ----------
     function setReportRange(kind) {
@@ -976,6 +867,58 @@ async function drawQrCard(qrDataUrl, { tableLabel, area, zone, venueName }) {
           restaurant.urubuto_code = urubuto_code;
           toast('Payment details saved.');
         });
+    }
+
+    // ---------- Billing ----------
+    function renderBilling() {
+      const qrCount = Number(restaurant.number_of_tables || 0);
+      const currentPlan = restaurant.plan || 'Free';
+      const plans = [
+        { name: 'Free', range: '1–5 QR codes', price: 'RWF 0/mo' },
+        { name: 'Starter', range: '6–15 QR codes', price: 'RWF 17,000/mo' },
+        { name: 'Standard', range: '16–25 QR codes', price: 'RWF 32,000/mo' },
+        { name: 'Business', range: '26–40 QR codes', price: 'RWF 47,000/mo' },
+        { name: 'Premium', range: '41–60 QR codes', price: 'RWF 77,000/mo' },
+        { name: 'Professional', range: '61–100 QR codes', price: 'RWF 145,000/mo' },
+        { name: 'Enterprise', range: '101+ QR codes', price: '2% of eligible sales' }
+      ];
+
+      screen.innerHTML = `
+        <div class="screen-head"><div><h1 class="screen-title">Platform Billing</h1><p>Manage your venue subscription and QR code plan.</p></div></div>
+        <div class="billing-wrap">
+          <div class="billing-card">
+            <div class="billing-top">
+              <div>
+                <div class="billing-label">Subscription plan</div>
+                <div class="billing-plan-name">${currentPlan}</div>
+                <div class="billing-subtext">${qrCount} active QR codes</div>
+              </div>
+              <span class="billing-status">Active</span>
+            </div>
+            <div class="section-label">Available plans</div>
+            <div class="plan-list">
+              ${plans.map(plan => `
+                <div class="plan-option ${plan.name === currentPlan ? 'current' : ''}">
+                  <div>
+                    <div class="plan-name">${plan.name}${plan.name === currentPlan ? '<span class="current-text">CURRENT</span>' : ''}</div>
+                    <div class="plan-description">${plan.range} · ${plan.price}</div>
+                  </div>
+                  ${plan.name !== currentPlan ? `<button class="secondary" onclick="changePlan('${plan.name}')">Select</button>` : ''}
+                </div>
+              `).join('')}
+            </div>
+            <div class="billing-footnote">This selects your plan tier immediately. Real payment collection isn't connected yet — that's a separate step for launch.</div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function changePlan(planName) {
+      if (!confirm('Switch to the ' + planName + ' plan?')) return;
+      await api('/restaurants/' + restaurantId + '/plan', { method: 'PUT', body: JSON.stringify({ plan: planName }) });
+      restaurant.plan = planName;
+      toast('Plan updated to ' + planName + '.');
+      showScreen('billing');
     }
 
     // ---------- Session ----------
