@@ -631,4 +631,19 @@ footer {
         min-width: 115px;
     }
 }
+/* Keep the payment notification compact */
+#order-banner {
+    padding: 10px 16px;
+    min-height: 0;
+    line-height: 1.4;
+    box-sizing: border-box;
+    z-index: 1000;
+}
 
+#order-banner p {
+    margin: 4px 0;
+}
+
+#order-banner button {
+    min-height: 40px;
+}
