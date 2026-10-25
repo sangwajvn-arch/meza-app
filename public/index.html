@@ -341,7 +341,7 @@ items.forEach(item => {
     for (let id in cart) {
         totalItems += cart[id];
         totalPrice += cart[id] * prices[id];
-        totalTime = Math.max(totalTime, prepTimes[id] || 0);
+        totalTime += cart[id] * (prepTimes[id] || 0);
     }
     document.getElementById('total-items').textContent = totalItems;
     document.getElementById('total-price').textContent = totalPrice.toLocaleString();
