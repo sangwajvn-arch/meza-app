@@ -6,9 +6,25 @@
     <title>Meza</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A8371E'/><text x='50' y='68' font-size='58' fill='%23FAF6EE' text-anchor='middle' font-family='sans-serif' font-weight='800'>M</text></svg>">
     <link rel="stylesheet" href="style.css">
+    <style>
+        #dish-category-list {
+            position: sticky; top: 0; z-index: 20;
+            display: flex; flex-wrap: nowrap; gap: 12px;
+            overflow-x: auto; padding: 12px 8px; margin: 10px 0 18px;
+            background: var(--bone, #FAF6EE);
+            -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+        }
+        #dish-category-list .category-card { flex: 0 0 auto; min-width: 120px; cursor: pointer; }
+        #dish-category-list .category-card.selected,
+        #category-list .category-card.selected {
+            outline: 3px solid var(--rust, #A8371E); outline-offset: 2px;
+        }
+        @media (max-width: 600px) {
+            #dish-category-list .category-card { min-width: 105px; }
+        }
+    </style>
 </head>
 <body>
-
     <div id="view-welcome" class="view active">
         <nav class="navbar">
             <div class="brand"><span class="brand-icon">M</span><span id="nav-restaurant-name">Meza</span></div>
@@ -26,7 +42,6 @@
                 <button onclick="showMenu()" class="nav-menu-btn" data-i18n="menu">Menu</button>
             </div>
         </nav>
-
         <main class="hero" id="home">
             <div class="hero-content">
                 <div class="table-badge">● <span data-i18n="table">Table</span> <span id="hero-table-number">---</span></div>
@@ -35,7 +50,7 @@
                 <div class="hero-buttons">
                     <button onclick="showMenu()" class="explore-btn"><span data-i18n="exploreMenu">Explore Menu</span><span>→</span></button>
                     <button onclick="scrollToAbout()" class="secondary-btn" data-i18n="howItWorks">How it works</button>
-                    <button class="explore-btn"><a class="nav-cta" href="register.html">Register your venue</a></button>
+                    <a class="explore-btn nav-cta" href="register.html">Register your venue</a>
                 </div>
             </div>
             <div class="hero-decoration">
@@ -43,7 +58,6 @@
                 <div class="food-card"><span>🍽️</span><p data-i18n="foodCardLine1">Good food.</p><strong data-i18n="foodCardLine2">Good moments.</strong></div>
             </div>
         </main>
-
         <section class="features" id="about">
             <div class="table-actions">
                 <button onclick="sendRequest('call_waiter')" class="request-btn">🖐 <span data-i18n="callWaiter">Call Waiter</span></button>
@@ -53,7 +67,6 @@
             <div class="feature"><div class="feature-icon">＋</div><h3 data-i18n="chooseTitle">Choose</h3><p data-i18n="chooseDesc">Select exactly what you want and adjust quantities.</p></div>
             <div class="feature"><div class="feature-icon">⚡</div><h3 data-i18n="orderTitle">Order</h3><p data-i18n="orderDesc">Send your order directly to the restaurant kitchen.</p></div>
         </section>
-
         <footer><span data-i18n="poweredBy">Powered by</span> <strong>Meza</strong><span>·</span>Contact: mezaapp.rw@gmail.com<span>-</span>+250 793 234 866</footer>
     </div>
 
@@ -70,16 +83,15 @@
     </div>
 
     <div id="view-dishes" class="view">
-        <div>
-        <button onclick="showCategories()" class="back-btn" data-i18n="backToCategories">← Back to categories</button>
-        </div>
+        <div><button onclick="showCategories()" class="back-btn" data-i18n="backToCategories">← Back to categories</button></div>
         <div>
             <button onclick="sendRequest('call_waiter')" class="request-btn">🖐 <span data-i18n="callWaiter">Call Waiter</span></button>
             <button onclick="sendRequest('request_bill')" class="request-btn">🧾 <span data-i18n="requestBill">Request Bill</span></button>
         </div>
+        <div id="dish-category-list" aria-label="Menu categories"></div>
         <h2 id="dishes-heading"></h2>
         <div id="dish-list"></div>
-        <p class="totals"><span data-i18n="itemsLabel">Items</span>: <span id="total-items">0</span> &nbsp;·&nbsp; <span data-i18n="totalLabel">Total</span>: <span id="total-price">0</span> RWF; <span id="total-time-row" style="display:none;">⏱ <span id="total-time">0</span> </p>
+        <p class="totals"><span data-i18n="itemsLabel">Items</span>: <span id="total-items">0</span> &nbsp;·&nbsp; <span data-i18n="totalLabel">Total</span>: <span id="total-price">0</span> RWF; <span id="total-time-row" style="display:none;">⏱ <span id="total-time">0</span></span></p>
         <div class="bottom-space"></div>
         <button id="cart-bar" onclick="submitOrder()">
             <span id="cart-summary" data-i18n="addItems">Add items to order</span>
@@ -94,19 +106,17 @@
             <div id="checkout-summary"></div>
             <div class="section-heading" style="margin-top:24px;">Pay with</div>
             <div id="payment-methods" style="display:grid;gap:10px;margin-bottom:20px;">
-                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('momo')">📱 MTN Mobile Money</button>
-                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('airtel')">📱 Airtel Money</button>
-                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('urubuto')">📱 Urubuto Pay</button>
-                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('card')">💳 Debit / Credit Card</button>
+                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('momo', this)">📱 MTN Mobile Money</button>
+                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('airtel', this)">📱 Airtel Money</button>
+                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('urubuto', this)">📱 Urubuto Pay</button>
+                <button class="request-btn" style="width:100%;text-align:left;padding:16px;" onclick="selectPaymentMethod('card', this)">💳 Debit / Credit Card</button>
             </div>
             <div id="phone-entry" style="display:none;margin-bottom:16px;"></div>
-
             <div id="sms-proof" style="display:none;margin-bottom:16px;">
                 <label style="font-weight:700;">Paste the payment confirmation SMS</label>
                 <textarea id="sms-input" rows="4" style="width:100%;margin-top:8px;" placeholder="Paste the SMS you received after paying..."></textarea>
                 <p id="sms-error" style="color:var(--rust);display:none;margin-top:8px;"></p>
             </div>
-
             <button id="pay-now-btn" style="width:100%;display:none;" onclick="processPayment()">Submit Payment Proof</button>
             <div id="payment-status" style="display:none;text-align:center;padding:20px;"></div>
             <div class="table-actions">
@@ -126,10 +136,10 @@
     const tableNumber = params.get('table') || 'unknown';
     const restaurantId = params.get('restaurant');
 
-   let cart = {};
-let prices = {};
-let prepTimes = {};
-let allItems = [];
+    let cart = {};
+    let prices = {};
+    let prepTimes = {};
+    let allItems = [];
     let currentCategory = null;
     let hasActiveOrder = false;
     let currentOrderId = null;
@@ -149,19 +159,17 @@ let allItems = [];
             orderSent: 'Order sent to the kitchen — please wait for approval.', doNotLeave: 'Do not leave this page.',
             approved: 'Your order has been approved! It\'s being prepared.', ready: 'Your food is ready — enjoy your meal!',
             callWaiter: 'Call Waiter', requestBill: 'Request Bill', requestSent: 'A staff member has been notified.' },
-
         rw: { home: 'Ahabanza', about: 'Ibyerekeye', menu: 'Ibiribwa', welcomePrefix: 'Murakaza neza kuri',
             heroDesc: 'Reba ibiribwa biryoshye, hitamo ibyo ukunda, hanyuma wohereze amafunguro yawe ku bakozi bategura ibiribwa.',
             exploreMenu: 'Reba Ibiribwa', howItWorks: 'Uko bikora', foodCardLine1: 'Ibiribwa byiza.', foodCardLine2: 'Ibihe byiza.',
             browseTitle: 'Shakisha', browseDesc: 'Reba ibiribwa byose kandi ubone ibyo ukunda.',
             chooseTitle: 'Hitamo', chooseDesc: 'Hitamo neza icyo ushaka n\'umubare wacyo.',
-            orderTitle: 'Tumiza', orderDesc: 'Ohereza  amafunguro yawe ako kanya aho biteguriwe.',
+            orderTitle: 'Tumiza', orderDesc: 'Ohereza amafunguro yawe ako kanya aho biteguriwe.',
             poweredBy: 'Byakozwe na', exploreMenuHeading: 'Ibiribwa', backToCategories: '← Subira ku byiciro', backHome: '← Ahabanza',
             table: 'Ameza', itemsLabel: 'Ibintu', totalLabel: 'Igiteranyo', addItems: 'Ongeraho ibintu', sendOrder: 'Ohereza ikirego →',
             orderSent: 'Ikirego cyoherejwe ku bategura ibiribwa — tegereza kwemezwa.', doNotLeave: 'Ntukave kuri iyi paji.',
             approved: 'Ikirego cyawe cyemejwe! Kirimo gutegurwa.', ready: 'Ibiribwa byawe biteguye — nezerwa!',
             callWaiter: 'Hamagara Umukozi', requestBill: 'Saba Fagitire', requestSent: 'Umukozi yamenyeshejwe.' },
-
         fr: { home: 'Accueil', about: 'À propos', menu: 'Menu', welcomePrefix: 'Bienvenue chez',
             heroDesc: 'Découvrez des plats délicieux, choisissez vos favoris, et envoyez votre commande directement en cuisine.',
             exploreMenu: 'Voir le menu', howItWorks: 'Comment ça marche', foodCardLine1: 'Bons plats.', foodCardLine2: 'Bons moments.',
@@ -176,14 +184,11 @@ let allItems = [];
     };
 
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const money = value => `${Number(value || 0).toLocaleString()} RWF`;
     const fullscreenBtn = document.getElementById('fullscreen-btn');
 
     fullscreenBtn.addEventListener('click', () => {
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => {
-                console.error(`Error attempting to enable fullscreen: ${err.message}`);
-            });
+            document.documentElement.requestFullscreen().catch(err => console.error('Fullscreen error:', err.message));
         } else {
             document.exitFullscreen();
         }
@@ -204,21 +209,24 @@ let allItems = [];
         'Coffee & Hot Drinks': { en: 'Coffee & Hot Drinks', rw: 'Ikawa n\'Ibindi Bishyushye', fr: 'Café et Boissons Chaudes' }
     };
 
+    let currentLang = localStorage.getItem('mezaLang') || 'en';
+
     function sendRequest(type) {
         fetch('/requests', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ restaurant_id: restaurantId, table: tableNumber, type })
         })
-        .then(() => {
-            const t = translations[currentLang];
-            alert(t.requestSent);
-        });
+        .then(response => {
+            if (!response.ok) throw new Error('Request failed');
+            alert((translations[currentLang] || translations.en).requestSent);
+        })
+        .catch(() => alert('Could not send the request. Please try again.'));
     }
 
     function getCategoryLabel(category) {
         const entry = categoryTranslations[category];
-        return entry ? entry[currentLang] : category;
+        return entry ? (entry[currentLang] || entry.en) : category;
     }
 
     function getDishName(item) {
@@ -233,19 +241,22 @@ let allItems = [];
         return item.description || '';
     }
 
-    let currentLang = localStorage.getItem('mezaLang') || 'en';
-
     function setLanguage(lang) {
-        currentLang = lang;
-        localStorage.setItem('mezaLang', lang);
+        currentLang = translations[lang] ? lang : 'en';
+        localStorage.setItem('mezaLang', currentLang);
         applyTranslations();
-        if (document.getElementById('view-categories').classList.contains('active')) loadCategories();
-        if (document.getElementById('view-dishes').classList.contains('active') && currentCategory) showDishes(currentCategory);
+        if (allItems.length) {
+            renderCategoryCards(document.getElementById('category-list'), getCategories());
+            renderCategoryCards(document.getElementById('dish-category-list'), getCategories());
+            if (currentCategory && document.getElementById('view-dishes').classList.contains('active')) showDishes(currentCategory);
+        }
     }
 
     function applyTranslations() {
-        const t = translations[currentLang];
-        document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t[el.dataset.i18n]; });
+        const t = translations[currentLang] || translations.en;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            if (t[el.dataset.i18n]) el.textContent = t[el.dataset.i18n];
+        });
         document.getElementById('table-label').textContent = `${t.table}: ${tableNumber}`;
         document.getElementById('hero-table-number').textContent = tableNumber;
         updateTotals();
@@ -253,15 +264,16 @@ let allItems = [];
 
     document.getElementById('lang-select').value = currentLang;
 
-    fetch('/restaurants/' + restaurantId)
-        .then(r => r.json())
+    fetch('/restaurants/' + encodeURIComponent(restaurantId || ''))
+        .then(r => { if (!r.ok) throw new Error('Restaurant not found'); return r.json(); })
         .then(data => {
             restaurant = data;
             const name = restaurant.name || 'Meza';
             document.getElementById('restaurant-name').textContent = name;
             document.getElementById('nav-restaurant-name').textContent = name;
             document.title = name;
-        });
+        })
+        .catch(error => console.error('Could not load restaurant details:', error));
 
     function switchView(id) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -269,158 +281,150 @@ let allItems = [];
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function showMenu() { switchView('view-categories'); loadCategories(); }
+    function showMenu() {
+        switchView('view-categories');
+        loadCategories();
+    }
     function showCategories() { switchView('view-categories'); }
     function scrollToAbout() { document.getElementById('about').scrollIntoView({ behavior: 'smooth' }); }
 
+    function getCategories() {
+        return [...new Set(allItems.map(item => item.category || 'Other'))];
+    }
+
+    function renderCategoryCards(container, categories) {
+        container.innerHTML = '';
+        categories.forEach(category => {
+            const card = document.createElement('div');
+            card.className = 'category-card';
+            card.dataset.category = category;
+            card.innerHTML = `
+                <div class="category-arrow">→</div>
+                <h3>${escapeHtml(getCategoryLabel(category))}</h3>
+                <p>${escapeHtml(getCategoryLabel(category))}</p>`;
+            card.addEventListener('click', () => showDishes(category));
+            container.appendChild(card);
+        });
+    }
+
     function loadCategories() {
-        fetch('/menu?restaurant=' + restaurantId)
-            .then(response => response.json())
+        fetch('/menu?restaurant=' + encodeURIComponent(restaurantId || ''))
+            .then(response => {
+                if (!response.ok) throw new Error('Could not load menu');
+                return response.json();
+            })
             .then(items => {
                 allItems = items;
-items.forEach(item => {
-    prices[item.id] = item.price;
-    prepTimes[item.id] = item.prep_time_minutes || 0;
-});
-                const categories = [...new Set(items.map(i => i.category || 'Other'))];
-                const container = document.getElementById('category-list');
-                container.innerHTML = '';
-          categories.forEach(category => {
-    const div = document.createElement('div');
-    div.className = 'category-card';
-
-    // Store the category on the card so we can highlight it
-    div.dataset.category = category;
-
-    div.innerHTML = `
-        <div class="category-arrow">→</div>
-        <h3>${getCategoryLabel(category)}</h3>
-        <p>${getCategoryLabel(category)}</p>
-    `;
-
-    div.onclick = () => showDishes(category);
-
-    container.appendChild(div);
-});
+                prices = {};
+                prepTimes = {};
+                items.forEach(item => {
+                    prices[item.id] = Number(item.price) || 0;
+                    prepTimes[item.id] = Number(item.prep_time_minutes) || 0;
+                });
+                const categories = getCategories();
+                renderCategoryCards(document.getElementById('category-list'), categories);
+                renderCategoryCards(document.getElementById('dish-category-list'), categories);
+                if (!categories.length) {
+                    document.getElementById('category-list').innerHTML = '<p>No menu items are available yet.</p>';
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                document.getElementById('category-list').innerHTML = '<p>Could not load the menu. Please try again.</p>';
+            });
     }
 
-  function showDishes(category) {
-    currentCategory = category;
+    function showDishes(category) {
+        currentCategory = category;
+        document.getElementById('dishes-heading').textContent = getCategoryLabel(category);
 
-    document.getElementById('dishes-heading').textContent =
-        getCategoryLabel(category);
+        document.querySelectorAll('#category-list .category-card, #dish-category-list .category-card')
+            .forEach(card => card.classList.toggle('selected', card.dataset.category === category));
 
-    // Keep the category bar visible on the dishes screen
-    const categoryList = document.getElementById('category-list');
-    categoryList.style.display = 'flex';
+        const dishes = allItems.filter(item => (item.category || 'Other') === category);
+        const container = document.getElementById('dish-list');
+        container.innerHTML = '';
 
-    // Highlight the selected category
-    document.querySelectorAll('.category-card').forEach(card => {
-        card.classList.remove('selected');
-    });
+        if (!dishes.length) container.innerHTML = '<p>No dishes in this category yet.</p>';
 
-    const selectedCard = [...categoryList.children].find(
-        card => card.dataset.category === category
-    );
+        dishes.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'dish-card';
+            div.innerHTML = `
+                ${item.image_url
+                    ? `<img src="${escapeHtml(item.image_url)}" alt="${escapeHtml(getDishName(item))}" class="dish-image">`
+                    : '<div class="dish-placeholder">🍽️</div>'}
+                <div class="dish-info">
+                    <h3>${escapeHtml(getDishName(item))}</h3>
+                    <p>${escapeHtml(getDishDescription(item))}</p>
+                    ${item.prep_time_minutes ? `<span class="prep-time">⏱ ${Number(item.prep_time_minutes)} min</span>` : ''}
+                    <strong class="price">${(Number(item.price) || 0).toLocaleString()} RWF</strong>
+                    <div class="stepper">
+                        <button type="button" onclick="changeQty('${String(item.id).replace(/'/g, "\\'")}', -1)">−</button>
+                        <span id="count-${escapeHtml(item.id)}">${cart[item.id] || 0}</span>
+                        <button type="button" onclick="changeQty('${String(item.id).replace(/'/g, "\\'")}', 1)">+</button>
+                    </div>
+                </div>`;
+            container.appendChild(div);
+        });
 
-    if (selectedCard) {
-        selectedCard.classList.add('selected');
+        switchView('view-dishes');
+        const selectedCard = [...document.getElementById('dish-category-list').children]
+            .find(card => card.dataset.category === category);
+        if (selectedCard) selectedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
 
-    // Display dishes belonging to the selected category
-    const dishes = allItems.filter(
-        item => (item.category || 'Other') === category
-    );
-
-    const container = document.getElementById('dish-list');
-    container.innerHTML = '';
-
-    dishes.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'dish-card';
-
-        div.innerHTML = `
-            ${item.image_url
-                ? `<img src="${item.image_url}" alt="${item.name}" class="dish-image">`
-                : `<div class="dish-placeholder">🍽️</div>`}
-            <div class="dish-info">
-                <h3>${getDishName(item)}</h3>
-                <p>${getDishDescription(item)}</p>
-                ${item.prep_time_minutes
-                    ? `<span class="prep-time">⏱ ${item.prep_time_minutes} min</span>`
-                    : ''}
-                <strong class="price">${item.price.toLocaleString()} RWF</strong>
-                <div class="stepper">
-                    <button onclick="changeQty('${item.id}', -1)">−</button>
-                    <span id="count-${item.id}">${cart[item.id] || 0}</span>
-                    <button onclick="changeQty('${item.id}', 1)">+</button>
-                </div>
-            </div>`;
-
-        container.appendChild(div);
-    });
-
-    switchView('view-dishes');
-}
- 
     function changeQty(itemId, delta) {
         const newQty = (cart[itemId] || 0) + delta;
-        if (newQty <= 0) {
-            delete cart[itemId];
-            const count = document.getElementById('count-' + itemId);
-            if (count) count.textContent = 0;
-        } else {
-            cart[itemId] = newQty;
-            const count = document.getElementById('count-' + itemId);
-            if (count) count.textContent = newQty;
-        }
+        if (newQty <= 0) delete cart[itemId];
+        else cart[itemId] = newQty;
+        const count = document.getElementById('count-' + itemId);
+        if (count) count.textContent = cart[itemId] || 0;
         updateTotals();
     }
 
     function updateTotals() {
-    let totalItems = 0, totalPrice = 0, totalTime = 0;
-    for (let id in cart) {
-        totalItems += cart[id];
-        totalPrice += cart[id] * prices[id];
-        totalTime += cart[id] * (prepTimes[id] || 0);
+        let totalItems = 0, totalPrice = 0, totalTime = 0;
+        for (const id in cart) {
+            totalItems += cart[id];
+            totalPrice += cart[id] * (prices[id] || 0);
+            totalTime += cart[id] * (prepTimes[id] || 0);
+        }
+        document.getElementById('total-items').textContent = totalItems;
+        document.getElementById('total-price').textContent = totalPrice.toLocaleString();
+        const timeRow = document.getElementById('total-time-row');
+        if (totalTime > 0) {
+            document.getElementById('total-time').textContent = totalTime;
+            timeRow.style.display = 'inline';
+        } else {
+            timeRow.style.display = 'none';
+        }
+        const t = translations[currentLang] || translations.en;
+        document.getElementById('cart-summary').textContent = totalItems > 0
+            ? totalItems + ' ' + t.itemsLabel.toLowerCase() + ' · ' + totalPrice.toLocaleString() + ' RWF'
+            : t.addItems;
     }
-    document.getElementById('total-items').textContent = totalItems;
-    document.getElementById('total-price').textContent = totalPrice.toLocaleString();
-
-    const timeRow = document.getElementById('total-time-row');
-    if (totalTime > 0) {
-        document.getElementById('total-time').textContent = totalTime;
-        timeRow.style.display = 'inline';
-    } else {
-        timeRow.style.display = 'none';
-    }
-
-    const summary = document.getElementById('cart-summary');
-    const t = translations[currentLang];
-    summary.textContent = totalItems > 0
-        ? totalItems + ' ' + t.itemsLabel.toLowerCase() + ' · ' + totalPrice.toLocaleString() + ' RWF'
-        : t.addItems;
-}
 
     function submitOrder() {
-        const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+        const totalItems = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
         if (totalItems === 0) return;
         fetch('/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ restaurant_id: restaurantId, table: tableNumber, items: cart })
         })
-        .then(response => response.json())
-        .then(data => { pendingOrderId = data.orderId; showCheckout(); });
+        .then(response => { if (!response.ok) throw new Error('Could not submit order'); return response.json(); })
+        .then(data => { pendingOrderId = data.orderId; showCheckout(); })
+        .catch(error => alert(error.message || 'Could not submit the order. Please try again.'));
     }
 
     function showCheckout() {
         let totalPrice = 0, lines = '';
-        for (let id in cart) {
-            const dish = allItems.find(i => i.id === id);
+        for (const id in cart) {
+            const dish = allItems.find(item => String(item.id) === String(id));
             const name = dish ? getDishName(dish) : id;
-            totalPrice += cart[id] * prices[id];
-            lines += `<p>${name} × ${cart[id]} — ${(cart[id] * prices[id]).toLocaleString()} RWF</p>`;
+            totalPrice += cart[id] * (prices[id] || 0);
+            lines += `<p>${escapeHtml(name)} × ${cart[id]} — ${(cart[id] * (prices[id] || 0)).toLocaleString()} RWF</p>`;
         }
         document.getElementById('checkout-summary').innerHTML = `${lines}<p class="price" style="font-size:20px;margin-top:10px;">Total: ${totalPrice.toLocaleString()} RWF</p>`;
         document.getElementById('payment-status').style.display = 'none';
@@ -430,82 +434,84 @@ items.forEach(item => {
         document.getElementById('sms-input').value = '';
         document.getElementById('sms-error').style.display = 'none';
         document.getElementById('payment-methods').style.display = 'grid';
-        document.querySelectorAll('#payment-methods button').forEach(b => b.classList.remove('selected'));
+        document.querySelectorAll('#payment-methods button').forEach(button => button.classList.remove('selected'));
+        selectedPaymentMethod = null;
         switchView('view-checkout');
     }
 
-    function selectPaymentMethod(method) {
+    function selectPaymentMethod(method, button) {
         selectedPaymentMethod = method;
-        document.querySelectorAll('#payment-methods button').forEach(b => b.classList.remove('selected'));
-        event.target.classList.add('selected');
+        document.querySelectorAll('#payment-methods button').forEach(item => item.classList.remove('selected'));
+        if (button) button.classList.add('selected');
 
         const numbers = { momo: restaurant.momo_number, airtel: restaurant.airtel_number, urubuto: restaurant.urubuto_code };
         const box = document.getElementById('phone-entry');
-
         if (method === 'card') {
             box.style.display = 'none';
         } else {
             box.style.display = 'block';
-            box.innerHTML = `<p style="font-weight:700;">Send payment to: ${numbers[method] || 'Not set up yet'}</p><p>Once sent, paste the confirmation SMS below and tap "Submit Payment Proof".</p>`;
+            box.innerHTML = `<p style="font-weight:700;">Send payment to: ${escapeHtml(numbers[method] || 'Not set up yet')}</p><p>Once sent, paste the confirmation SMS below and tap "Submit Payment Proof".</p>`;
         }
-        document.getElementById('sms-proof').style.display = (method === 'card') ? 'none' : 'block';
+        document.getElementById('sms-proof').style.display = method === 'card' ? 'none' : 'block';
         document.getElementById('pay-now-btn').style.display = 'block';
     }
 
     function processPayment() {
-    if (selectedPaymentMethod === 'card') {
-        alert('Card payments are not set up yet. Please choose MoMo, Airtel, or Urubuto Pay.');
-        return;
+        if (selectedPaymentMethod === 'card') {
+            alert('Card payments are not set up yet. Please choose MoMo, Airtel, or Urubuto Pay.');
+            return;
+        }
+        if (!pendingOrderId) {
+            alert('Your order could not be identified. Please submit your order again.');
+            return;
+        }
+        const smsText = document.getElementById('sms-input').value.trim();
+        const errBox = document.getElementById('sms-error');
+        if (smsText.length < 20) {
+            errBox.textContent = 'Please paste the full payment SMS you received.';
+            errBox.style.display = 'block';
+            return;
+        }
+        errBox.style.display = 'none';
+
+        fetch('/orders/' + encodeURIComponent(pendingOrderId) + '/claim-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment_method: selectedPaymentMethod, sms_text: smsText })
+        })
+        .then(response => response.json().then(data => {
+            if (!response.ok) throw new Error(data.error || data.message || 'Payment proof could not be submitted.');
+            return data;
+        }))
+        .then(data => {
+            currentOrderId = pendingOrderId;
+            cart = {};
+            updateTotals();
+            hasActiveOrder = true;
+            switchView('view-dishes');
+            const banner = document.getElementById('order-banner');
+            banner.querySelector('#banner-text').textContent = data.verified
+                ? 'Payment verified — waiting for the restaurant to confirm.'
+                : 'Payment proof submitted — waiting for the restaurant to check it.';
+            banner.style.background = 'var(--gold)';
+            banner.style.color = 'var(--ink)';
+            banner.style.display = 'block';
+        })
+        .catch(error => {
+            errBox.textContent = error.message || 'Something went wrong submitting your payment proof. Please try again.';
+            errBox.style.display = 'block';
+        });
     }
-
-    const smsText = document.getElementById('sms-input').value.trim();
-    const errBox = document.getElementById('sms-error');
-    if (smsText.length < 20) {
-        errBox.textContent = 'Please paste the full payment SMS you received.';
-        errBox.style.display = 'block';
-        return;
-    }
-    errBox.style.display = 'none';
-
-    fetch('/orders/' + pendingOrderId + '/claim-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payment_method: selectedPaymentMethod, sms_text: smsText })
-    })
-    .then(response => response.json())
-    .then(data => {
-        currentOrderId = pendingOrderId;
-        cart = {};
-        updateTotals();
-        hasActiveOrder = true;
-        switchView('view-dishes');
-
-        const banner = document.getElementById('order-banner');
-        const text = banner.querySelector('#banner-text');
-        text.textContent = data.verified
-            ? 'Payment verified — waiting for the restaurant to confirm.'
-            : 'Payment proof submitted — waiting for the restaurant to check it.';
-        banner.style.background = 'var(--gold)';
-        banner.style.color = 'var(--ink)';
-        banner.style.display = 'block';
-    })
-    .catch(() => {
-        errBox.textContent = 'Something went wrong submitting your payment proof. Please try again.';
-        errBox.style.display = 'block';
-    });
-}
-
 
     function watchOrderStatus() {
         if (!currentOrderId) return;
-        fetch('/orders?restaurant=' + restaurantId)
+        fetch('/orders?restaurant=' + encodeURIComponent(restaurantId || ''))
             .then(response => response.json())
             .then(orders => {
-                const order = orders.find(o => o.id === currentOrderId);
+                const order = orders.find(item => String(item.id) === String(currentOrderId));
                 if (!order) return;
                 const banner = document.getElementById('order-banner');
-                const t = translations[currentLang];
-
+                const t = translations[currentLang] || translations.en;
                 if (order.status === 'pending' && order.paid) {
                     banner.querySelector('#banner-text').textContent = t.orderSent;
                     banner.style.background = 'var(--forest)';
@@ -523,27 +529,33 @@ items.forEach(item => {
                 } else if (order.status === 'rejected') {
                     banner.querySelector('#banner-text').textContent = "We couldn't confirm your payment. Please see a staff member.";
                     banner.style.background = 'var(--rust)';
+                    banner.style.color = 'var(--bone)';
                     currentOrderId = null;
                     hasActiveOrder = false;
                 }
-            });
+            })
+            .catch(error => console.error('Could not check order status:', error));
     }
     setInterval(watchOrderStatus, 4000);
 
     function checkMessages() {
-        fetch('/messages?restaurant=' + restaurantId + '&table=' + tableNumber)
+        fetch('/messages?restaurant=' + encodeURIComponent(restaurantId || '') + '&table=' + encodeURIComponent(tableNumber))
             .then(response => response.json())
             .then(messages => {
-                messages.forEach(msg => {
-                    alert(msg.text);
-                    fetch('/messages/' + msg.id, { method: 'DELETE' });
+                messages.forEach(message => {
+                    alert(message.text);
+                    fetch('/messages/' + encodeURIComponent(message.id), { method: 'DELETE' });
                 });
-            });
+            })
+            .catch(error => console.error('Could not check messages:', error));
     }
     setInterval(checkMessages, 4000);
 
-    window.addEventListener('beforeunload', function (e) {
-        if (hasActiveOrder) { e.preventDefault(); e.returnValue = ''; }
+    window.addEventListener('beforeunload', function (event) {
+        if (hasActiveOrder) {
+            event.preventDefault();
+            event.returnValue = '';
+        }
     });
 
     applyTranslations();
