@@ -123,6 +123,20 @@ html, body {
     .main { padding: 16px; }
     .metric-grid, .form-grid { grid-template-columns: 1fr; }
 }
+    @media (max-width: 600px) {
+  .meza-app { display: block; width: 100%; }
+  .sidebar { height: auto; padding: 12px; }
+  .sidebar nav { display: flex; overflow-x: auto; gap: 6px; }
+  .nav-item { flex-shrink: 0; width: auto; }
+  .main { padding: 16px 12px 60px; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .form-grid { grid-template-columns: 1fr; }
+  .hero { padding: 18px; }
+  .hero h1 { font-size: 24px; }
+  .row { flex-direction: column; align-items: flex-start; }
+  .row-actions { flex-wrap: wrap; }
+  .modal-box { width: calc(100% - 24px); padding: 16px; }
+}
   </style>
 </head>
 <body>
