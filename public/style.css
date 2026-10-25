@@ -361,3 +361,42 @@ footer span { margin: 0 6px; font-weight: 400; }
     color: var(--muted, #6B6455);
     margin: 2px 0 6px;
 }
+/* Prevent elements from overflowing */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    margin: 0;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Mobile phones */
+@media screen and (max-width: 600px) {
+
+    body {
+        font-size: 15px;
+    }
+
+    h1 {
+        font-size: 30px;
+        line-height: 1.2;
+    }
+
+    button {
+        max-width: 100%;
+        min-height: 44px;
+    }
+
+    input,
+    select,
+    textarea {
+        max-width: 100%;
+        font-size: 16px;
+    }
+}
