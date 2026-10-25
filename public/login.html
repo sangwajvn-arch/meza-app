@@ -2,60 +2,18 @@
 <html>
 <head>
     <title>Sign in — Meza</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A8371E'/><text x='50' y='68' font-size='58' fill='%23FAF6EE' text-anchor='middle' font-family='sans-serif' font-weight='800'>M</text></svg>">
     <link rel="stylesheet" href="style.css">
-</head>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A8371E'/><text x='50' y='68' font-size='58' fill='%23FAF6EE' text-anchor='middle' font-family='sans-serif' font-weight='800'>M</text></svg>">
     <style>
-        .staff-header {
-    width: 100%;
-    box-sizing: border-box;
-    text-align: center;
-    padding: 20px;
-}
-
-.staff-body {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 20px;
-}
-
-.staff-body .panel {
-    width: 100%;
-    max-width: 400px;
-    margin: 20px auto;
-    box-sizing: border-box;
-    text-align: center;
-}
-
-.staff-body .field-group {
-    width: 100%;
-    margin-bottom: 18px;
-    text-align: center;
-}
-
-.staff-body .field-group label {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    text-align: center;
-    margin-bottom: 10px;
-}
-
-.staff-body .field-group input {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    margin: 0;
-}
-
-.staff-body .btn-success {
-    display: block;
-    margin: 0 auto;
-    padding: 12px 24px;
-    cursor: pointer;
-}
+        
+        .pw-wrap { position: relative; display: block; }
+        .pw-wrap input { width: 100%; box-sizing: border-box; padding-right: 48px; }
+        .pw-wrap .pw-eye { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); width: 38px; height: 38px; min-width: 0; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: #6B6455; cursor: pointer; }
+        .pw-wrap .pw-eye:hover { color: #1A1712; background: rgba(0, 0, 0, 0.05); }
+        .pw-wrap .pw-eye:focus-visible { outline: 2px solid #A8371E; outline-offset: 1px; }
+        .pw-wrap .pw-eye svg { width: 20px; height: 20px; display: block; pointer-events: none; }
     </style>
+</head>
 <body>
     <div class="staff-header">
         <h1>Sign in to Meza</h1>
@@ -66,23 +24,28 @@
         <div class="panel">
             <div class="field-group">
                 <label>Email</label>
-                <input type="text" id="email" placeholder="you@yourrestaurant.com">
+                <input type="text" id="email" placeholder="you@yourrestaurant.com" autocomplete="username" autocapitalize="off" spellcheck="false">
             </div>
             <div class="field-group">
                 <label>Password</label>
-                <input type="password" id="password" placeholder="Your password">
-                <p style="margin-top:8px;"><a href="forgot-password.html">Forgot password ?</a></p>
+                <input type="password" id="password" placeholder="Your password" autocomplete="current-password">
             </div>
             <button class="btn-success" onclick="login()">Sign in</button>
+            <p style="margin-top:8px;"><a href="forgot-password.html">Forgot password?</a></p>
             <p style="margin-top:14px;">No account? <a href="register.html">Create a restaurant</a></p>
         </div>
     </div>
 
     <script>
-        function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        let busy = false;
 
+        function login() {
+            if (busy) return;
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            if (!email || !password) { alert('Enter your email and password.'); return; }
+
+            busy = true;
             fetch('/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -95,8 +58,49 @@
                 } else {
                     window.location.href = 'admin.html?restaurant=' + data.restaurantId;
                 }
-            });
+            })
+            .catch(() => alert('Could not reach the server. Check your connection and try again.'))
+            .finally(() => { busy = false; });
         }
+    </script>
+    <script>
+        // Eye icon on every password box, and the Enter key presses the main button.
+        (function () {
+            var EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+            var EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+            document.querySelectorAll('input[type="password"]').forEach(function (input) {
+                var wrap = document.createElement('div');
+                wrap.className = 'pw-wrap';
+                input.parentNode.insertBefore(wrap, input);
+                wrap.appendChild(input);
+
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'pw-eye';
+                button.setAttribute('aria-label', 'Show password');
+                button.setAttribute('aria-pressed', 'false');
+                button.innerHTML = EYE;
+                button.addEventListener('click', function () {
+                    var show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    button.innerHTML = show ? EYE_OFF : EYE;
+                    button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    button.setAttribute('aria-pressed', show ? 'true' : 'false');
+                    input.focus();
+                });
+                wrap.appendChild(button);
+            });
+
+            document.querySelectorAll('input').forEach(function (input) { input.setAttribute('enterkeyhint', 'go'); });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key !== 'Enter' || event.isComposing || !event.target.matches('input')) return;
+                var box = event.target.closest('.panel') || document;
+                var go = box.querySelector('button.btn-success, button.primary');
+                if (go && !go.disabled) { event.preventDefault(); go.click(); }
+            });
+        })();
     </script>
 </body>
 </html>
