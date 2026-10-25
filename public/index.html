@@ -285,43 +285,84 @@ items.forEach(item => {
                 const categories = [...new Set(items.map(i => i.category || 'Other'))];
                 const container = document.getElementById('category-list');
                 container.innerHTML = '';
-                categories.forEach(category => {
-                    const div = document.createElement('div');
-                    div.className = 'category-card';
-                    div.innerHTML = `<div class="category-arrow">→</div><h3>${getCategoryLabel(category)}</h3><p>${getCategoryLabel(category)}</p>`;
-                    div.onclick = () => showDishes(category);
-                    container.appendChild(div);
-                });
-            });
+          categories.forEach(category => {
+    const div = document.createElement('div');
+    div.className = 'category-card';
+
+    // Store the category on the card so we can highlight it
+    div.dataset.category = category;
+
+    div.innerHTML = `
+        <div class="category-arrow">→</div>
+        <h3>${getCategoryLabel(category)}</h3>
+        <p>${getCategoryLabel(category)}</p>
+    `;
+
+    div.onclick = () => showDishes(category);
+
+    container.appendChild(div);
+});
     }
 
-    function showDishes(category) {
-        currentCategory = category;
-        document.getElementById('dishes-heading').textContent = getCategoryLabel(category);
-        const dishes = allItems.filter(i => (i.category || 'Other') === category);
-        const container = document.getElementById('dish-list');
-        container.innerHTML = '';
-        dishes.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'dish-card';
-            div.innerHTML = `
-    ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}" class="dish-image">` : `<div class="dish-placeholder">🍽️</div>`}
-    <div class="dish-info">
-        <h3>${getDishName(item)}</h3>
-        <p>${getDishDescription(item)}</p>
-        ${item.prep_time_minutes ? `<span class="prep-time">⏱ ${item.prep_time_minutes} min</span>` : ''}
-        <strong class="price">${item.price.toLocaleString()} RWF</strong>
-        <div class="stepper">
-            <button onclick="changeQty('${item.id}', -1)">−</button>
-            <span id="count-${item.id}">${cart[item.id] || 0}</span>
-            <button onclick="changeQty('${item.id}', 1)">+</button>
-        </div>
-    </div>`;
-            container.appendChild(div);
-        });
-        switchView('view-dishes');
+  function showDishes(category) {
+    currentCategory = category;
+
+    document.getElementById('dishes-heading').textContent =
+        getCategoryLabel(category);
+
+    // Keep the category bar visible on the dishes screen
+    const categoryList = document.getElementById('category-list');
+    categoryList.style.display = 'flex';
+
+    // Highlight the selected category
+    document.querySelectorAll('.category-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+
+    const selectedCard = [...categoryList.children].find(
+        card => card.dataset.category === category
+    );
+
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
     }
 
+    // Display dishes belonging to the selected category
+    const dishes = allItems.filter(
+        item => (item.category || 'Other') === category
+    );
+
+    const container = document.getElementById('dish-list');
+    container.innerHTML = '';
+
+    dishes.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'dish-card';
+
+        div.innerHTML = `
+            ${item.image_url
+                ? `<img src="${item.image_url}" alt="${item.name}" class="dish-image">`
+                : `<div class="dish-placeholder">🍽️</div>`}
+            <div class="dish-info">
+                <h3>${getDishName(item)}</h3>
+                <p>${getDishDescription(item)}</p>
+                ${item.prep_time_minutes
+                    ? `<span class="prep-time">⏱ ${item.prep_time_minutes} min</span>`
+                    : ''}
+                <strong class="price">${item.price.toLocaleString()} RWF</strong>
+                <div class="stepper">
+                    <button onclick="changeQty('${item.id}', -1)">−</button>
+                    <span id="count-${item.id}">${cart[item.id] || 0}</span>
+                    <button onclick="changeQty('${item.id}', 1)">+</button>
+                </div>
+            </div>`;
+
+        container.appendChild(div);
+    });
+
+    switchView('view-dishes');
+}
+ 
     function changeQty(itemId, delta) {
         const newQty = (cart[itemId] || 0) + delta;
         if (newQty <= 0) {
