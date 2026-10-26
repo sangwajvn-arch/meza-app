@@ -309,6 +309,21 @@ function analyzeSms(text, expectedTotal) {
     }
     return { verified: true, amount, transactionId, reason: 'Amount and transaction ID look correct.' };
 }
+app.get('/login', (req, res) => {
+    res.sendFile(__dirname + '/login.html');
+});
+
+app.get('/register', (req, res) => {
+    res.sendFile(__dirname + '/register.html');
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(__dirname + '/admin.html');
+});
+
+app.get('/waitress', (req, res) => {
+    res.sendFile(__dirname + '/waitress.html');
+});
 
 // ================= INSTALLABLE APP =================
 
