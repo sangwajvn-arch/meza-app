@@ -1447,12 +1447,11 @@ app.delete('/restaurants/:id', requireSuper, (req, res) => {
 });
 
 // ================= QR CODES =================
-
 app.get('/qr', requireRole(), async (req, res) => {
     const table = req.query.table;
     if (typeof table !== 'string' || !validText(table, 30)) return res.status(400).json({ error: 'Invalid table.' });
     const baseUrl = (process.env.APP_BASE_URL || (req.protocol + '://' + req.get('host'))).replace(/\/$/, '');
-    const url = `${baseUrl}/restaurant=${encodeURIComponent(req.actor.restaurantId)}/table=${encodeURIComponent(table.trim())}`;
+    const url = `${baseUrl}/?restaurant=${encodeURIComponent(req.actor.restaurantId)}&table=${encodeURIComponent(table.trim())}`;
     try {
         const dataUrl = await QRCode.toDataURL(url, { margin: 1, width: 600 });
         res.json({ url, dataUrl });
@@ -1460,7 +1459,6 @@ app.get('/qr', requireRole(), async (req, res) => {
         res.status(500).json({ error: 'Could not generate QR code.' });
     }
 });
-
 // ================= MESSAGES & TABLE REQUESTS =================
 
 // Staff send a note to a table (for example "item not available").
