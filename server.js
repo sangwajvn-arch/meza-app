@@ -337,6 +337,10 @@ app.get('/forgot-password', (req, res) => {
 app.get('/meza', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'meza.html'));
 });
+app.get('/super-admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'super-admin.html'));
+});
+
 
 // ================= INSTALLABLE APP =================
 
