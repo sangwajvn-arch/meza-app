@@ -64,14 +64,6 @@ app.use((req, res, next) => {
     if (IS_PROD) res.setHeader('Strict-Transport-Security', 'max-age=15552000');
     next();
 });
-
-// Only the public website folder is served. Never .env, server.js or meza.db.
-app.use(express.static(path.join(__dirname, 'public'), {
-    setHeaders(res, filePath) {
-        if (filePath.endsWith('sw.js')) res.setHeader('Cache-Control', 'no-cache');           // phones must always see a new service worker
-        else if (/\.(png|ico|svg)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=604800');
-    }
-}));
 // Redirect HTML URLs to clean URLs.
 app.use((req, res, next) => {
     if (req.method !== 'GET' || !req.path.endsWith('.html')) {
@@ -84,6 +76,14 @@ app.use((req, res, next) => {
     res.redirect(301, cleanPath + query);
 });
 
+
+// Only the public website folder is served. Never .env, server.js or meza.db.
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders(res, filePath) {
+        if (filePath.endsWith('sw.js')) res.setHeader('Cache-Control', 'no-cache');           // phones must always see a new service worker
+        else if (/\.(png|ico|svg)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=604800');
+    }
+}));
 
 app.use(express.json({ limit: '100kb' }));
 
