@@ -4,6 +4,7 @@ const db = new Database(
         ? '/app/data/meza.db'
         : require('path').join(__dirname, 'meza.db')
 );
+console.log('DATABASE FILE:', db.name);
 
 db.exec(`
     CREATE TABLE IF NOT EXISTS orders (
