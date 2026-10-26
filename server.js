@@ -64,18 +64,6 @@ app.use((req, res, next) => {
     if (IS_PROD) res.setHeader('Strict-Transport-Security', 'max-age=15552000');
     next();
 });
-// Redirect HTML URLs to clean URLs.
-app.use((req, res, next) => {
-    if (req.method !== 'GET' || !req.path.endsWith('.html')) {
-        return next();
-    }
-
-    const cleanPath = req.path.slice(0, -5);
-    const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
-
-    res.redirect(301, cleanPath + query);
-});
-
 
 // Only the public website folder is served. Never .env, server.js or meza.db.
 app.use(express.static(path.join(__dirname, 'public'), {
