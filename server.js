@@ -309,20 +309,33 @@ function analyzeSms(text, expectedTotal) {
     }
     return { verified: true, amount, transactionId, reason: 'Amount and transaction ID look correct.' };
 }
+// CLEAN URLS FOR MEZA
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.get('/login', (req, res) => {
-    res.sendFile(__dirname + '/login.html');
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.get('/register', (req, res) => {
-    res.sendFile(__dirname + '/register.html');
+    res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
 app.get('/admin', (req, res) => {
-    res.sendFile(__dirname + '/admin.html');
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 app.get('/waitress', (req, res) => {
-    res.sendFile(__dirname + '/waitress.html');
+    res.sendFile(path.join(__dirname, 'public', 'waitress.html'));
+});
+
+app.get('/forgot-password', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'forgot-password.html'));
+});
+app.get('/meza', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'meza.html'));
 });
 
 // ================= INSTALLABLE APP =================
