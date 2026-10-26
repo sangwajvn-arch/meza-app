@@ -66,8 +66,17 @@ app.use((req, res, next) => {
 });
 
 // Only the public website folder is served. Never .env, server.js or meza.db.
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders(res, filePath) {
+        if (filePath.endsWith('sw.js')) res.setHeader('Cache-Control', 'no-cache');           // phones must always see a new service worker
+        else if (/\.(png|ico|svg)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=604800');
+    }
+}));
 app.use(express.json({ limit: '100kb' }));
+
+// Everything below is live data: never let a browser or the offline cache keep a copy.
+// (Only the public menu and restaurant name opt back in, further down.)
+app.use((req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
 
 // ================= SESSIONS (stored in the database, so logins survive restarts) =================
 
@@ -299,6 +308,33 @@ function analyzeSms(text, expectedTotal) {
     }
     return { verified: true, amount, transactionId, reason: 'Amount and transaction ID look correct.' };
 }
+
+// ================= INSTALLABLE APP =================
+
+// The page asks for /manifest.webmanifest?start=<its own address>, so an installed icon reopens that same page.
+app.get('/manifest.webmanifest', (req, res) => {
+    let start = typeof req.query.start === 'string' ? req.query.start : '/';
+    if (start.length > 300 || !/^\/[A-Za-z0-9._~\-\/?=&%]*$/.test(start) || start.startsWith('//')) start = '/';
+    const pagePath = start.split('?')[0];
+    res.setHeader('Cache-Control', 'no-cache');
+    res.type('application/manifest+json').send(JSON.stringify({
+        id: pagePath,
+        name: 'Meza',
+        short_name: 'Meza',
+        description: 'Restaurant ordering made simple.',
+        start_url: start,
+        scope: '/',
+        display: 'standalone',
+        orientation: 'any',
+        background_color: '#FAF6EE',
+        theme_color: '#1A1712',
+        icons: [
+            { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+            { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+        ]
+    }));
+});
 
 // ================= HEALTH CHECK (for the hosting platform) =================
 
@@ -739,12 +775,7 @@ app.post('/orders/:id/confirm-payment', requireRole('waitress', 'cashier'), (req
             if (r.changes !== 1) throw new HttpError(409, 'This order can no longer be confirmed.');
             rememberTransactionId(order);
         })();
-       res.json({
-    success: true,
-    message: 'Payment confirmed successfully!',
-    paymentStatus: 'paid',
-    status: 'pending'
-});
+        res.json({ status: 'pending' });
     } catch (e) { sendError(res, e, 'Unable to confirm the payment.'); }
 });
 
@@ -899,6 +930,7 @@ app.get('/dashboard', requireRole(), (req, res) => {
 app.get('/menu', (req, res) => {
     const restaurantId = req.query.restaurant;
     if (typeof restaurantId !== 'string' || !validId(restaurantId)) return res.json([]);
+    res.setHeader('Cache-Control', 'no-cache');      // public: the offline copy on phones is allowed
     res.json(db.prepare('SELECT * FROM menu_items WHERE restaurant_id = ?').all(Number(restaurantId)));
 });
 
@@ -1284,6 +1316,7 @@ app.get('/restaurants/:id', (req, res) => {
         row = db.prepare('SELECT * FROM restaurants WHERE id = ?').get(id);
     } else {
         row = db.prepare('SELECT id, name, number_of_tables, momo_number, airtel_number, urubuto_code, subscription_status FROM restaurants WHERE id = ?').get(id);
+        res.setHeader('Cache-Control', 'no-cache');  // public subset only: the offline copy on phones is allowed
     }
     if (!row) return res.status(404).json({ error: 'Restaurant not found.' });
     res.json(row);
@@ -1369,7 +1402,6 @@ app.put('/restaurants/:id/subscription', requireSuper, (req, res) => {
 
 // Operator only: permanently delete a restaurant and everything that belongs to it.
 app.delete('/restaurants/:id', requireSuper, (req, res) => {
-    console.log('RESTAURANT DELETION REQUEST:', req.params.id);
     if (!validId(req.params.id)) return res.status(400).json({ error: 'Invalid restaurant ID.' });
     const id = Number(req.params.id);
     db.transaction(() => {
