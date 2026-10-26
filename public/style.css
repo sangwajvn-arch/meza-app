@@ -459,3 +459,191 @@ html body .request-btn.selected { border-color: var(--rust); background: var(--r
   html body .sidebar .brand, html body .venue-chip { display: none; }
   html body .hero { padding-top: 16px; padding-bottom: 12px; }
 }
+/* ==========================================================================
+   Meza — phone layout.  Loaded LAST on every page, so it only adds to what
+   each page already has.  Phones are targeted with max-width media queries;
+   desktops and tablets keep their normal look.
+   ========================================================================== */
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: transparent; overflow-wrap: break-word; }
+img, video, canvas, svg { max-width: 100%; }
+button, a, select, input, label, summary { touch-action: manipulation; }
+
+/* Phones have no hover, so stop buttons staying "faded" after a tap */
+@media (hover: none) {
+  button:hover { opacity: 1; }
+}
+
+/* Keep content clear of notches and the home bar (works with viewport-fit=cover) */
+.navbar {
+  padding-left: max(24px, env(safe-area-inset-left));
+  padding-right: max(24px, env(safe-area-inset-right));
+}
+.staff-header {
+  padding-top: max(22px, calc(env(safe-area-inset-top) + 12px));
+  padding-left: max(26px, env(safe-area-inset-left));
+  padding-right: max(26px, env(safe-area-inset-right));
+}
+.order-banner { padding-top: max(12px, env(safe-area-inset-top)); }
+#cart-bar { bottom: max(20px, env(safe-area-inset-bottom)); }
+.staff-body { padding-bottom: max(70px, calc(env(safe-area-inset-bottom) + 40px)); }
+
+/* Plain <div>s are given a white "card" look by style.css. Where that is wrong, switch it off. */
+.staff-topbar > div { background: none; border: 0; border-radius: 0; padding: 0; margin: 0; max-width: none; }   /* kitchen + cashier titles were white on white */
+.meza-app div:not([class]) { background: none; border: 0; border-radius: 0; padding: 0; margin: 0; max-width: none; } /* no boxes inside boxes on the owner dashboard */
+.panel a, .field-group a { color: var(--rust); font-weight: 700; }
+.team-head { align-items: flex-end; margin-top: 18px; }
+.team-head .section-label { margin: 0 0 10px; }
+.team-head button { margin-bottom: 10px; }
+
+/* Extra rule used by the checkout screen (kept here so it is never lost) */
+.request-btn.selected { border-color: var(--rust); background: var(--rust); color: var(--bone); }
+
+/* ==========================================================================
+   Tablets and phones
+   ========================================================================== */
+@media (max-width: 900px) {
+
+  /* ----- Owner dashboard (admin.html): top bar + swipeable tabs ----- */
+  html, body { width: 100%; height: auto; min-height: 100%; }
+  .meza-app { width: 100%; min-height: 100vh; min-height: 100dvh; }
+  .sidebar {
+    position: sticky; top: 0; z-index: 40; height: auto; overflow: visible;
+    padding: 10px 12px 0; padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right));
+  }
+  .sidebar .brand { margin-bottom: 8px; font-size: 17px; }
+  .venue-chip { margin-bottom: 8px; }
+  .sidebar nav {
+    display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 10px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .sidebar nav::-webkit-scrollbar { display: none; }
+  .sidebar nav { -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent); }
+  .nav-item { width: auto; flex: 0 0 auto; white-space: nowrap; min-height: 42px; padding: 10px 14px; margin: 0; }
+  .main { padding: 16px 14px 100px; min-height: 0; }
+  .topbar { flex-wrap: wrap; padding-bottom: 12px; margin-bottom: 16px; }
+  .signout, #fullscreen-btn { min-height: 40px; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .metric-value { font-size: 22px; }
+  .screen-title { font-size: 22px; }
+  .row { flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+  .row > div:first-child { flex: 1 1 200px; min-width: 0; }
+  .row-actions { flex-wrap: wrap; }
+  .row-actions button, .button-row button { min-height: 42px; }
+  .plan-option, .billing-top { flex-wrap: wrap; }
+  .toast { left: 12px; right: 12px; bottom: max(16px, env(safe-area-inset-bottom)); text-align: center; }
+  table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* ==========================================================================
+   Phones
+   ========================================================================== */
+@media (max-width: 640px) {
+
+  /* Inputs at 16px stop iPhones zooming in when you tap a box */
+  input, select, textarea,
+  .field input, .field select, .recipe-row select, .recipe-row input { font-size: 16px !important; }
+  input, select, textarea { max-width: none; min-height: 46px; }
+  .field-group input, .field-group select { max-width: none; }
+
+  /* Easy-to-hit buttons */
+  button { min-height: 44px; }
+  .stepper button { width: 46px; height: 46px; font-size: 22px; }
+  .stepper { gap: 18px; }
+  .modal-close { min-width: 44px; min-height: 44px; font-size: 22px; }
+
+  /* ----- Customer page (index.html) ----- */
+  .navbar { padding: 10px 14px; padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); gap: 10px; }
+  .brand { min-width: 0; font-size: 16px; }
+  .brand > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46vw; }
+  .nav-links { gap: 8px; flex-shrink: 0; }
+  .nav-links a { display: none; }
+  .nav-menu-btn { padding: 9px 16px; min-height: 40px; }
+  .lang-select { min-height: 40px; padding: 6px 8px; }
+
+  .hero { padding: 26px 18px 14px; gap: 14px; }
+  .hero-content h1 { font-size: 28px; }
+  .hero-decoration { display: none; }
+  .hero-buttons { flex-direction: column; width: 100%; }
+  .hero-buttons button { width: 100%; justify-content: center; min-height: 50px; }
+  .features { grid-template-columns: 1fr; padding: 18px 18px 6px; gap: 18px; }
+  footer { padding: 20px 16px; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+
+  .page-header { padding: 14px 14px 0; gap: 10px; margin-bottom: 12px; }
+  .view > .back-btn { display: block; margin: 12px 0 6px 14px; padding: 10px 0; text-align: left; }
+  .view > h2 { padding: 0 14px; margin: 2px 0 12px; }
+  #category-list, #dish-list, .totals { padding-left: 14px; padding-right: 14px; }
+  #dish-list, #category-list, #restaurant-list, #payment-methods { background: none; border: 0; border-radius: 0; padding-top: 0; padding-bottom: 0; }
+  #restaurant-list { padding-left: 0; padding-right: 0; }
+  #view-checkout > div { background: none !important; border: 0 !important; padding: 0 !important; }
+  .panel > button { width: 100%; min-height: 50px; }
+  .category-card { padding: 18px; }
+  .dish-image, .dish-placeholder { height: 150px; }
+  .dish-info { padding: 14px; }
+  .bottom-space { height: 120px; }
+  #cart-bar { width: calc(100% - 24px); min-height: 56px; padding: 12px 16px; }
+
+  /* "Call waiter / Request bill" buttons move to the bottom, above the cart bar */
+  .table-actions {
+    top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); left: 12px; right: 12px;
+    flex-direction: row; justify-content: flex-end; flex-wrap: wrap;
+  }
+  .request-btn { min-height: 44px; font-size: 13px; padding: 10px 14px; }
+
+  /* Checkout (its wrapper is a plain inline-styled box) */
+  #view-checkout > div { max-width: none !important; margin: 0 12px 14px !important; }
+  #payment-methods button { min-height: 56px; font-size: 15px; }
+  #pay-now-btn { min-height: 54px; font-size: 16px; }
+
+  /* ----- Staff pages, sign-in pages, platform admin ----- */
+  .staff-header { padding: 16px 16px; padding-top: max(16px, calc(env(safe-area-inset-top) + 8px)); }
+  .staff-header h1 { font-size: 19px; }
+  .staff-topbar { flex-wrap: wrap; gap: 12px; }
+  .staff-body { padding: 16px 12px max(90px, calc(env(safe-area-inset-bottom) + 60px)); }
+  .section-heading { margin: 22px 0 10px; }
+  .ticket-grid { grid-template-columns: 1fr; gap: 12px; }
+  .ticket { padding: 14px; }
+  .ticket-table { font-size: 17px; }
+  .ticket-items { font-size: 15px; }
+  .ticket-actions { gap: 10px; }
+  .ticket-actions button { flex: 1 1 140px; min-height: 50px; font-size: 14px; }
+  .panel { max-width: none; margin-bottom: 22px; }
+  .list-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .list-row-info, .list-row-main { min-width: 0; }
+  .list-row-actions { width: 100%; }
+  .list-row-actions button { flex: 1 1 120px; }
+  .empty-state { padding: 28px 16px; }
+
+  /* ----- Owner dashboard details ----- */
+  .form-grid { grid-template-columns: 1fr; }
+  .card, .metric { padding: 14px; }
+  .hero { padding: 20px 16px; }
+  .hero h1 { font-size: 24px; }
+  .screen-head { flex-wrap: wrap; gap: 10px; }
+  .recipe-row { flex-wrap: wrap; }
+  .recipe-row select, .recipe-row input { flex: 1 1 120px; min-height: 44px; }
+  .modal-overlay { align-items: flex-end; }
+  .modal-box {
+    width: 100%; max-width: none; max-height: 92vh; max-height: 92dvh; border-radius: 16px 16px 0 0;
+    padding: 20px 16px; padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+  .team-row .row-actions, .team-edit .button-row { width: 100%; }
+  .team-row .row-actions button { flex: 1 1 90px; }
+  .pin-chip { order: 3; }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+  .metric-grid { grid-template-columns: 1fr; }
+  .hero-content h1 { font-size: 25px; }
+  .brand > span:last-child { max-width: 38vw; }
+}
+
+/* Phones turned sideways: keep the sticky bars short */
+@media (max-height: 480px) and (orientation: landscape) {
+  .sidebar .brand, .venue-chip { display: none; }
+  .hero { padding-top: 16px; padding-bottom: 12px; }
+}
+
