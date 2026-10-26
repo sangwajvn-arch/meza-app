@@ -13,25 +13,7 @@ const db = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
-
 const path = require('path');
-
-const pages = [
-    'index',
-    'admin',
-    'waitress',
-    'login',
-    'register',
-    'forgot-password',
-    'reset-password',
-    'meza'
-];
-
-pages.forEach(page => {
-    app.get('/' + page, (req, res) => {
-        res.sendFile(path.join(__dirname, page + '.html'));
-    });
-});
 // Rwanda is UTC+2 all year (no daylight saving). Servers usually run in UTC,
 // so dates for reports must be calculated in Kigali time, not server time.
 const TZ = 'Africa/Kigali';
