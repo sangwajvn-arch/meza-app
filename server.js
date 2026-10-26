@@ -3,7 +3,7 @@ require('dotenv').config();
 const express = require('express');
 
 const fs = require('fs');
-const os = require('os');
+const ?restauos = require('os');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const QRCode = require('qrcode');
@@ -1452,7 +1452,7 @@ app.get('/qr', requireRole(), async (req, res) => {
     const table = req.query.table;
     if (typeof table !== 'string' || !validText(table, 30)) return res.status(400).json({ error: 'Invalid table.' });
     const baseUrl = (process.env.APP_BASE_URL || (req.protocol + '://' + req.get('host'))).replace(/\/$/, '');
-    const url = `${baseUrl}/?restaurant=${encodeURIComponent(req.actor.restaurantId)}&table=${encodeURIComponent(table.trim())}`;
+    const url = `${baseUrl}/restaurant=${encodeURIComponent(req.actor.restaurantId)}/table=${encodeURIComponent(table.trim())}`;
     try {
         const dataUrl = await QRCode.toDataURL(url, { margin: 1, width: 600 });
         res.json({ url, dataUrl });
