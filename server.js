@@ -10,6 +10,7 @@ const QRCode = require('qrcode');
 const crypto = require('crypto');
 const db = require('./db');
 
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
