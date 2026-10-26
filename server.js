@@ -72,6 +72,19 @@ app.use(express.static(path.join(__dirname, 'public'), {
         else if (/\.(png|ico|svg)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=604800');
     }
 }));
+// Redirect HTML URLs to clean URLs.
+app.use((req, res, next) => {
+    if (req.method !== 'GET' || !req.path.endsWith('.html')) {
+        return next();
+    }
+
+    const cleanPath = req.path.slice(0, -5);
+    const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+
+    res.redirect(301, cleanPath + query);
+});
+
+
 app.use(express.json({ limit: '100kb' }));
 
 // Everything below is live data: never let a browser or the offline cache keep a copy.
