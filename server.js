@@ -3,7 +3,7 @@ require('dotenv').config();
 const express = require('express');
 
 const fs = require('fs');
-const ?restauos = require('os');
+const os = require('os')
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const QRCode = require('qrcode');
