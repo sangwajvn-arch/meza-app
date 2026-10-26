@@ -1,5 +1,9 @@
 const Database = require('better-sqlite3');
-const db = new Database('meza.db');
+const db = new Database(
+    process.env.RAILWAY_ENVIRONMENT
+        ? '/app/data/meza.db'
+        : require('path').join(__dirname, 'meza.db')
+);
 
 db.exec(`
     CREATE TABLE IF NOT EXISTS orders (
