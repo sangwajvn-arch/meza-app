@@ -137,6 +137,41 @@ db.exec(`
         UNIQUE(restaurant_id, transaction_id)
     )
 `);
+db.exec(`
+    CREATE TABLE IF NOT EXISTS payment_transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        restaurant_id INTEGER NOT NULL,
+        order_id INTEGER NOT NULL,
+
+        provider TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT DEFAULT 'RWF',
+
+        payer_phone TEXT,
+
+        provider_reference TEXT UNIQUE,
+        external_transaction_id TEXT,
+
+        status TEXT DEFAULT 'pending',
+
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        updated_at INTEGER DEFAULT (strftime('%s', 'now')),
+
+        FOREIGN KEY (restaurant_id) REFERENCES restaurants(id),
+        FOREIGN KEY (order_id) REFERENCES orders(id)
+    )
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_payment_order
+    ON payment_transactions(order_id)
+`);
+
+db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_payment_restaurant
+    ON payment_transactions(restaurant_id)
+`);
 
 try { db.exec("ALTER TABLE menu_items ADD COLUMN category TEXT DEFAULT 'Other'"); } catch (e) {}
 try { db.exec("ALTER TABLE menu_items ADD COLUMN name_rw TEXT DEFAULT ''"); } catch (e) {}
